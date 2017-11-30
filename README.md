@@ -1,3 +1,3 @@
-# Storm Calendar
+# Storm Date Picker
 
 WIP
