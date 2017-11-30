@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Thu, 30 Nov 2017 17:42:51 GMT
+ * @version 0.1.0: Thu, 30 Nov 2017 21:20:48 GMT
  * @author stormid
  * @license MIT
  */
@@ -121,11 +121,15 @@ var elementFactory = function elementFactory(type) {
 };
 
 var calendar = function calendar(props) {
-	return '<div class="sdp-date">\n                                        <div class="sdp-month">\n                                            <button class="sdp-back js-calendar__back" type="button">\n                                                <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                            </button>\n                                            <button class="sdp-next js-calendar__next" type="button">\n                                                <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                            </button>\n                                            <div class="sdp-month-label">' + props.monthTitle + ' ' + props.yearTitle + '</div>\n                                            <table class="sdp-days">\n                                                <thead class="sdp-days-head">\n                                                    <tr class="sdp-days-row">\n                                                        <th class="sdp-day-head">Mo</th>\n                                                        <th class="sdp-day-head">Tu</th>\n                                                        <th class="sdp-day-head">We</th>\n                                                        <th class="sdp-day-head">Th</th>\n                                                        <th class="sdp-day-head">Fr</th>\n                                                        <th class="sdp-day-head">Sa</th>\n                                                        <th class="sdp-day-head">Su</th>\n                                                    </tr>\n                                                </thead>\n                                                <tbody class="sdp-days-body">\n                                                    ' + props.model.map(weeks(props.active)).join('') + '\n                                                </tbody>\n                                            </table>\n                                        </div>\n                                    </div>';
+	return '<div class="sdp-date">\n                                        <button class="sdp-back js-sdp__back" type="button">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="sdp-next js-sdp__next" type="button">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="js-sdp__month"></div>\n                                    </div>';
+};
+
+var month = function month(props) {
+	return '<div class="sdp-month-label">' + props.monthTitle + ' ' + props.yearTitle + '</div>\n                        <table class="sdp-days">\n                            <thead class="sdp-days-head">\n                                <tr class="sdp-days-row">\n                                    <th class="sdp-day-head">Mo</th>\n                                    <th class="sdp-day-head">Tu</th>\n                                    <th class="sdp-day-head">We</th>\n                                    <th class="sdp-day-head">Th</th>\n                                    <th class="sdp-day-head">Fr</th>\n                                    <th class="sdp-day-head">Sa</th>\n                                    <th class="sdp-day-head">Su</th>\n                                </tr>\n                            </thead>\n                            <tbody class="sdp-days-body">\n                                ' + props.model.map(weeks(props.active)).join('') + '\n                            </tbody>\n                        </table>';
 };
 
 var day = function day(activeDays, props, i) {
-	return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button class="sdp-day-btn" role="button" data-model-index="' + i + '" aria-label="Select ' + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
+	return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button class="sdp-day-btn" role="button" data-model-index="' + i + '" aria-label="' + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
 };
 
 var weeks = function weeks(activeDays) {
@@ -136,6 +140,16 @@ var weeks = function weeks(activeDays) {
 
 var TRIGGER_EVENTS = ['click', 'keydown'];
 var TRIGGER_KEYCODES = [13, 32];
+var KEYCODES = {
+	9: 'TAB',
+	13: 'ENTER',
+	27: 'ESCAPE',
+	32: 'SPACE',
+	37: 'LEFT',
+	38: 'UP',
+	39: 'RIGHT',
+	40: 'DOWN'
+};
 
 var componentPrototype = {
 	init: function init() {
@@ -181,13 +195,13 @@ var componentPrototype = {
 	},
 	open: function open() {
 		if (this.isOpen) return;
-		this.renderView();
+		this.renderCalendar();
 		this.isOpen = true;
 
-		//document.body.addEventListener('focusout', this.boundHandleFocusOut);
+		document.body.addEventListener('focusout', this.boundHandleFocusOut);
 	},
 	close: function close() {
-		this.node.parentNode.removeChild(this.container);
+		this.container.parentNode.removeChild(this.container);
 		this.isOpen = false;
 		//remove from DOM
 		//remove all event listeners
@@ -201,47 +215,65 @@ var componentPrototype = {
 			document.body.removeEventListener('focusout', _this.boundHandleBlur);
 		}, 16);
 	},
-	renderView: function renderView() {
+	renderCalendar: function renderCalendar() {
 		this.container = elementFactory('div', {}, 'sdp-container');
+		this.container.innerHTML = calendar();
 		this.node.parentNode.appendChild(this.container);
+		this.monthContainer = document.querySelector('.js-sdp__month');
 		this.renderMonth();
+		this.manageButtons();
+		this.initListeners();
+		//focus on active date or today's date
 	},
 	renderMonth: function renderMonth() {
 		this.monthView = monthViewFactory(this.rootDate, this.startDate);
-		this.container.innerHTML = calendar(this.monthView);
-		this.manageButtons();
+		this.monthContainer.innerHTML = month(this.monthView);
 	},
-	enableButton: function enableButton(btn, value) {
+	manageButtons: function manageButtons() {
 		var _this2 = this;
 
 		TRIGGER_EVENTS.forEach(function (ev) {
-			btn.addEventListener(ev, function (e) {
-				if (!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
-				_this2.renderView.call(_this2, value);
-			});
-		});
-	},
-	manageButtons: function manageButtons() {
-		var _this3 = this;
-
-		var backButton = {
-			node: this.container.querySelector('.js-calendar__back'),
-			value: -1
-		},
-		    nextButton = {
-			node: this.container.querySelector('.js-calendar__next'),
-			value: 1
-		};
-
-		TRIGGER_EVENTS.forEach(function (ev) {
-			[backButton, nextButton].forEach(function (btn) {
-				btn.node.addEventListener(ev, function (e) {
+			[_this2.container.querySelector('.js-sdp__back'), _this2.container.querySelector('.js-sdp__next')].forEach(function (btn, i) {
+				btn.addEventListener(ev, function (e) {
 					if (!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
-					_this3.rootDate = new Date(_this3.rootDate.getFullYear(), _this3.rootDate.getMonth() + btn.value);
-					_this3.renderMonth();
+					_this2.rootDate = new Date(_this2.rootDate.getFullYear(), _this2.rootDate.getMonth() + (i === 0 ? -1 : 1));
+					_this2.renderMonth();
 				});
 			});
 		});
+	},
+	initListeners: function initListeners() {
+		var _this3 = this;
+
+		TRIGGER_EVENTS.forEach(function (ev) {
+			_this3.container.addEventListener(ev, function (e) {
+				if (e.keyCode) return _this3.handleKeyDown(e);else _this3.handleClick(e);
+				//click, check e.target
+			});
+		});
+	},
+	handleKeyDown: function handleKeyDown(e) {
+		var keyDownDictionary = {
+			TAB: function TAB() {},
+			ENTER: function ENTER() {},
+			ESCAPE: function ESCAPE() {
+				this.close();
+			},
+			SPACE: function SPACE(e) {
+				this.selectDate(e);
+			},
+			LEFT: function LEFT() {},
+			UP: function UP() {},
+			RIGHT: function RIGHT() {},
+			DOWN: function DOWN() {}
+		};
+		if (KEYCODES[e.keyCode] && keyDownDictionary[KEYCODES[e.keyCode]]) keyDownDictionary[KEYCODES[e.keyCode]].call(this, e);
+	},
+	handleClick: function handleClick(e) {},
+	selectDate: function selectDate(e) {
+		this.startDate = this.monthView.model[+e.target.getAttribute('data-model-index')];
+		this.rootDate = this.startDate;
+		//this.close();
 	}
 };
 

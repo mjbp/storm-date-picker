@@ -1,8 +1,18 @@
 import { elementFactory, monthViewFactory } from './utils';
-import { calendar } from './templates';
+import { calendar, month } from './templates';
 
 const TRIGGER_EVENTS = ['click', 'keydown'],
-	  TRIGGER_KEYCODES = [13, 32];
+	  TRIGGER_KEYCODES = [13, 32],
+	  KEYCODES = {
+		  9: 'TAB',
+		  13: 'ENTER',
+		  27: 'ESCAPE',
+		  32: 'SPACE',
+		  37: 'LEFT',
+		  38: 'UP',
+		  39: 'RIGHT',
+		  40: 'DOWN'
+	  };
 
 export default {
 	init() {
@@ -52,13 +62,13 @@ export default {
 	},
 	open(){
 		if(this.isOpen) return;
-		this.renderView();
+		this.renderCalendar();
 		this.isOpen = true;
 
-		//document.body.addEventListener('focusout', this.boundHandleFocusOut);
+		document.body.addEventListener('focusout', this.boundHandleFocusOut);
 	},
 	close(){
-		this.node.parentNode.removeChild(this.container);
+		this.container.parentNode.removeChild(this.container);
 		this.isOpen = false;
 		//remove from DOM
 		//remove all event listeners
@@ -70,43 +80,65 @@ export default {
 			document.body.removeEventListener('focusout', this.boundHandleBlur);
 		}, 16);
 	},
-	renderView(){
+	renderCalendar(){
 		this.container = elementFactory('div', {}, 'sdp-container');
+		this.container.innerHTML = calendar();
 		this.node.parentNode.appendChild(this.container);
+		this.monthContainer = document.querySelector('.js-sdp__month');
 		this.renderMonth();
+		this.manageButtons();
+		this.initListeners();
+		//focus on active date or today's date
 	},
 	renderMonth(){
 		this.monthView = monthViewFactory(this.rootDate, this.startDate);
-		this.container.innerHTML = calendar(this.monthView);
-		this.manageButtons();
-	},
-	enableButton(btn, value){
-		TRIGGER_EVENTS.forEach(ev => {
-			btn.addEventListener(ev, e => {
-				if(!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
-				this.renderView.call(this, value);
-			});
-		});
+		this.monthContainer.innerHTML = month(this.monthView);
 	},
 	manageButtons() {
-		let backButton = {
-				node: this.container.querySelector('.js-calendar__back'),
-				value: -1
-			},
-			nextButton = {
-				node: this.container.querySelector('.js-calendar__next'),
-				value: 1
-			};
-
 		TRIGGER_EVENTS.forEach(ev => {
-			[backButton, nextButton].forEach(btn => {
-				btn.node.addEventListener(ev, e => {
-					if(!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
-					this.rootDate = new Date(this.rootDate.getFullYear(), this.rootDate.getMonth() + btn.value);
-					this.renderMonth();
+			[this.container.querySelector('.js-sdp__back'), this.container.querySelector('.js-sdp__next')]
+				.forEach((btn, i) => {
+					btn.addEventListener(ev, e => {
+						if(!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
+						this.rootDate = new Date(this.rootDate.getFullYear(), this.rootDate.getMonth() + (i === 0 ? -1 : 1));
+						this.renderMonth();
+					});
 				});
+		});
+	},
+	initListeners(){
+		TRIGGER_EVENTS.forEach(ev => {
+			this.container.addEventListener(ev, e => {
+				if(e.keyCode) return this.handleKeyDown(e);
+				else this.handleClick(e);
+				//click, check e.target
 			});
 		});
+	},
+	handleKeyDown(e){
+		const keyDownDictionary = {
+			TAB(){},
+			ENTER(){},
+			ESCAPE(){
+				this.close();
+			},
+			SPACE(e){
+				this.selectDate(e)
+			},
+			LEFT(){},
+			UP(){},
+			RIGHT(){},
+			DOWN(){}
+		}
+		if(KEYCODES[e.keyCode] && keyDownDictionary[KEYCODES[e.keyCode]]) keyDownDictionary[KEYCODES[e.keyCode]].call(this, e);
+	},
+	handleClick(e){
+
+	},
+	selectDate(e){
+		this.startDate = this.monthView.model[+e.target.getAttribute('data-model-index')];
+		this.rootDate = this.startDate;
+		//this.close();
 	}
 };
 
