@@ -8,9 +8,10 @@ const init = (sel, opts) => {
 	if(!els.length) return console.warn('Date picker not initialised, no augmentable elements found');
     
 	return els.map((el) => {
-		if(el.nodeName === 'input') return console.warn('Date picker target node not an input');
 		return Object.assign(Object.create(componentPrototype), {
-			node: el,
+			node: el, 
+			input: el.querySelector('input'),
+			btn: el.querySelector('.btn'),
 			settings: Object.assign({}, defaults, opts)
 		}).init();
 	});

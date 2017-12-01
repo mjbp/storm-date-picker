@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Thu, 30 Nov 2017 21:20:48 GMT
+ * @version 0.1.0: Fri, 01 Dec 2017 16:53:06 GMT
  * @author stormid
  * @license MIT
  */
@@ -14,9 +14,10 @@ const init = (sel, opts) => {
 	if(!els.length) return console.warn('Date picker not initialised, no augmentable elements found');
     
 	return els.map((el) => {
-		if(el.nodeName === 'input') return console.warn('Date picker target node not an input');
 		return Object.assign(Object.create(componentPrototype), {
-			node: el,
+			node: el, 
+			input: el.querySelector('input'),
+			btn: el.querySelector('.btn'),
 			settings: Object.assign({}, defaults, opts)
 		}).init();
 	});

@@ -1,6 +1,19 @@
+import fecha from 'fecha';
+
+export const parseDate = fecha.parse;
+
+export const formatDate = fecha.format;
+
 export const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+export const catchBubble = e => {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+};
+
+export const getMonthLength = (year, month) => new Date(year, (month + 1), 0).getDate();
 
 const isToday = candidate => {
     let today = new Date();
@@ -35,7 +48,7 @@ const monthModel = (year, month, startDate) => {
                 number: prevMonthStartDay,
                 previousMonth: true,
                 isToday: isToday(tmpDate),
-                isStartDate: isStartDate(startDate, tmpDate),
+                isStartDate: startDate && isStartDate(startDate, tmpDate) || false,
 				date: tmpDate
             });
             prevMonthStartDay++;
@@ -46,18 +59,17 @@ const monthModel = (year, month, startDate) => {
         output.push({ 
             number: i,
             date: tmpDate,
-            isStartDate: isStartDate(startDate, tmpDate),
+            isStartDate: startDate && isStartDate(startDate, tmpDate) || false,
             isToday: isToday(tmpDate)
         });
     }
-
     if(endDay !== 0) for(let i = 1; i <= (7 - endDay); i++) {
         let tmpDate = new Date(year, month + 1, i);
         output.push({ 
             number: i,
             nextMonth: true,
             date: tmpDate,
-            isStartDate: isStartDate(startDate, tmpDate),
+            isStartDate: startDate && isStartDate(startDate, tmpDate) || false,
             isToday: isToday(tmpDate)
         });
     }
@@ -78,3 +90,7 @@ export const elementFactory = (type, attributes = {}, className) => {
 
     return el;
 };
+
+const focusableElements = ['a[href]', 'area[href]', 'input:not([disabled])', 'select:not([disabled])', 'textarea:not([disabled])', 'button:not([disabled])', 'iframe', 'object', 'embed', '[contenteditable]', '[tabindex]:not([tabindex="-1"])'];
+
+export const getFocusableChildren = node => [].slice.call(node.querySelectorAll(focusableElements.join(','))).filter(child => !!(child.offsetWidth || child.offsetHeight || child.getClientRects().length));

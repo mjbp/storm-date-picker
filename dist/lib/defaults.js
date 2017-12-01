@@ -2,7 +2,7 @@ export default {
 	callback: null,
 	startOpen: false,
 	startDate: false,
-	closeOnSelect: false,
-	displayFormat: 'dd/mm/YYYY',
-	valueFormat: 'dd/mm/YYYY'
+	// closeOnSelect: false,
+	displayFormat: 'dddd MMMM D, YYYY', //Thursday January 12, 2017
+	valueFormat: 'DD/MM/YYYY'
 };
