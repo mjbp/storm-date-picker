@@ -9,17 +9,18 @@ import {
 	formatDate
 } from './utils';
 import { calendar, month } from './templates';
-import { TRIGGER_EVENTS, TRIGGER_KEYCODES, KEYCODES } from './constants';
+import { 
+	TRIGGER_EVENTS,
+	TRIGGER_KEYCODES,
+	KEYCODES,
+	ARIA_HELP_TEXT,
+	CLASSNAMES,
+	SELECTORS
+} from './constants';
 
 export default {
 	init() {
-		this.inputClone = elementFactory('input', { type: 'text', tabindex: -1 }, 'field');
-		this.input.setAttribute('type', 'hidden');
-		this.node.appendChild(this.inputClone);
-
-		this.inputClone.addEventListener('change', e => {
-			this.startDate = parseDate(this.inputClone.value, this.settings.valueFormat);//throws if parse error
-		});
+		this.initClone();
 
 		TRIGGER_EVENTS.forEach(ev => {
 			this.btn.addEventListener(ev, e => {
@@ -40,6 +41,16 @@ export default {
 		this.settings.startOpen && this.open();
 		return this;
 	},
+	initClone(){
+		this.inputClone = elementFactory('input', { type: 'text', tabindex: -1}, this.input.className);
+		this.input.setAttribute('type', 'hidden');
+		this.node.appendChild(this.inputClone);
+
+		this.inputClone.addEventListener('change', e => {
+			this.startDate = parseDate(this.inputClone.value, this.settings.displayFormat)//throws if parse error
+			this.input.value = this.startDate || '';
+		});
+	},
 	toggle(){
 		if(this.isOpen) this.close();
 		else this.open();
@@ -48,14 +59,16 @@ export default {
 		if(this.isOpen) return;
 		this.renderCalendar();
 		this.isOpen = true;
+		this.btn.setAttribute('aria-expanded', 'true');
 		this.workingDate = this.rootDate;
-		this.container.querySelector('.sdp-day-btn--is-active') ? this.container.querySelector('.sdp-day-btn--is-active').focus() : this.container.querySelector('.sdp-day-btn--is-today') ? this.container.querySelector('.sdp-day-btn--is-today').focus() : this.container.querySelectorAll('.sdp-day-btn')[0].focus();
+		this.container.querySelector(SELECTORS.BTN_ACTIVE) ? this.container.querySelector(SELECTORS.BTN_ACTIVE).focus() : this.container.querySelector(SELECTORS.BTN_TODAY) ? this.container.querySelector(SELECTORS.BTN_TODAY).focus() : this.container.querySelectorAll(SELECTORS.BTN_DEFAULT)[0].focus();
 		document.body.addEventListener('focusout', this.boundHandleFocusOut);
 	},
 	close(){
 		if(!this.isOpen) return;
 		this.node.removeChild(this.container);
 		this.isOpen = false;
+		this.btn.setAttribute('aria-expanded', 'false');
 		this.btn.focus();
 		this.workingDate = false;
 	},
@@ -67,17 +80,17 @@ export default {
 		}, 16);
 	},
 	renderCalendar(){
-		this.container = elementFactory('div', {}, 'sdp-container');
+		this.container = elementFactory('div', { 'role': 'dialog', 'aria-helptext': ARIA_HELP_TEXT }, 'sdp-container');
 		this.container.innerHTML = calendar();
 		this.node.appendChild(this.container);
-		this.monthContainer = document.querySelector('.js-sdp__month');
+		this.monthContainer = document.querySelector(SELECTORS.MONTH_CONTAINER);
 		this.renderMonth();
 		this.initListeners();
 	},
 	renderMonth(){
 		this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate);
 		this.monthContainer.innerHTML = month(this.monthView);
-		if(!this.container.querySelector('.sdp-day-btn[tabindex="0"]')) [].slice.call(this.container.querySelectorAll('.sdp-day-btn:not([disabled])')).shift().setAttribute('tabindex', '0');
+		if(!this.container.querySelector(`${SELECTORS.BTN_DEFAULT}[tabindex="0"]`)) [].slice.call(this.container.querySelectorAll(`${SELECTORS.BTN_DEFAULT}:not([disabled])`)).shift().setAttribute('tabindex', '0');
 	},
 	initListeners(){
 		TRIGGER_EVENTS.forEach(ev => {
@@ -87,8 +100,8 @@ export default {
 	routeHandlers(e){
 		if(e.keyCode) this.handleKeyDown(e);
 		else {
-			if(e.target.classList.contains('js-sdp-nav__btn') || e.target.parentNode.classList.contains('js-sdp-nav__btn')) this.handleNav(+(e.target.getAttribute('data-action') || e.target.parentNode.getAttribute('data-action')));
-			if(e.target.classList.contains('sdp-day-btn')) this.selectDate(e);
+			if(e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute('data-action') || e.target.parentNode.getAttribute('data-action')));
+			if(e.target.classList.contains(SELECTORS.BTN_DEFAULT)) this.selectDate(e);
 		}
 	},
 	handleNav(action){
@@ -97,6 +110,8 @@ export default {
 	},
 	handleKeyDown(e){
 		const keyDownDictionary = {
+			PAGE_UP(){},//?
+			PAGE_DOWN(){},//?
 			TAB(){
 				/* 
 					- trap tab in focusable children??
@@ -107,7 +122,7 @@ export default {
 			ENTER(e){
 				catchBubble(e);
 				if(e.target.classList.contains('sdp-day-btn')) this.selectDate(e);
-				if(e.target.classList.contains('js-sdp-nav__btn')) this.handleNav(+e.target.getAttribute('data-action'));
+				if(e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute('data-action'));
 			},
 			ESCAPE(){ this.close(); },
 			SPACE(e) { keyDownDictionary.ENTER(e); },
@@ -183,19 +198,15 @@ export default {
 		this.startDate = false;
 		this.inputClone.value = '';
 		this.input.value = '';
+		if(this.isOpen) this.close();
 	},
-	getValue(){ return this.startDate; }
+	getValue(){ return this.startDate; },
+	setValue(nextValue){
+		this.rootDate = parseDate(nextValue, this.settings.valueFormat);
+		this.rootDate.setHours(0,0,0,0);
+		this.startDate = this.rootDate;
+		this.inputClone.value = formatDate(this.rootDate, this.settings.displayFormat);
+		this.input.value = this.startDate;
+		if(this.isOpen) this.workingDate = this.startDate, this.renderMonth();
+	}
 };
-
-
-/*
-
-	Left: Move focus to the previous day. Will move to the last day of the previous month, if the current day is the first day of a month.
-	Right: Move focus to the next day. Will move to the first day of the following month, if the current day is the last day of a month.
-	Up: Move focus to the same day of the previous week. Will wrap to the appropriate day in the previous month.
-	Down: Move focus to the same day of the following week. Will wrap to the appropriate day in the following month.
-	Tab: Navigate between calander grid and previous/next selection buttons
-	Enter/Space: Select date
-	Escape: close calendar, no change
-
-*/

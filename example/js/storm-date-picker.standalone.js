@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Fri, 01 Dec 2017 16:53:06 GMT
+ * @version 0.1.0: Fri, 01 Dec 2017 17:42:14 GMT
  * @author stormid
  * @license MIT
  */
@@ -507,17 +507,24 @@ var KEYCODES = {
   40: 'DOWN'
 };
 
+var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, or Escape to cancel.';
+
+var CLASSNAMES = {
+  NAV_BTN: 'js-sdp-nav__btn'
+};
+
+var SELECTORS = {
+  BTN_DEFAULT: '.sdp-day-btn',
+  BTN_ACTIVE: '.sdp-day-btn--is-active',
+  BTN_TODAY: '.sdp-day-btn--is-today',
+  MONTH_CONTAINER: '.js-sdp__month'
+};
+
 var componentPrototype = {
   init: function init() {
     var _this = this;
 
-    this.inputClone = elementFactory('input', { type: 'text', tabindex: -1 }, 'field');
-    this.input.setAttribute('type', 'hidden');
-    this.node.appendChild(this.inputClone);
-
-    this.inputClone.addEventListener('change', function (e) {
-      _this.startDate = parseDate(_this.inputClone.value, _this.settings.valueFormat); //throws if parse error
-    });
+    this.initClone();
 
     TRIGGER_EVENTS.forEach(function (ev) {
       _this.btn.addEventListener(ev, function (e) {
@@ -538,6 +545,18 @@ var componentPrototype = {
     this.settings.startOpen && this.open();
     return this;
   },
+  initClone: function initClone() {
+    var _this2 = this;
+
+    this.inputClone = elementFactory('input', { type: 'text', tabindex: -1 }, this.input.className);
+    this.input.setAttribute('type', 'hidden');
+    this.node.appendChild(this.inputClone);
+
+    this.inputClone.addEventListener('change', function (e) {
+      _this2.startDate = parseDate(_this2.inputClone.value, _this2.settings.displayFormat); //throws if parse error
+      _this2.input.value = _this2.startDate || '';
+    });
+  },
   toggle: function toggle() {
     if (this.isOpen) this.close();else this.open();
   },
@@ -545,50 +564,52 @@ var componentPrototype = {
     if (this.isOpen) return;
     this.renderCalendar();
     this.isOpen = true;
+    this.btn.setAttribute('aria-expanded', 'true');
     this.workingDate = this.rootDate;
-    this.container.querySelector('.sdp-day-btn--is-active') ? this.container.querySelector('.sdp-day-btn--is-active').focus() : this.container.querySelector('.sdp-day-btn--is-today') ? this.container.querySelector('.sdp-day-btn--is-today').focus() : this.container.querySelectorAll('.sdp-day-btn')[0].focus();
+    this.container.querySelector(SELECTORS.BTN_ACTIVE) ? this.container.querySelector(SELECTORS.BTN_ACTIVE).focus() : this.container.querySelector(SELECTORS.BTN_TODAY) ? this.container.querySelector(SELECTORS.BTN_TODAY).focus() : this.container.querySelectorAll(SELECTORS.BTN_DEFAULT)[0].focus();
     document.body.addEventListener('focusout', this.boundHandleFocusOut);
   },
   close: function close() {
     if (!this.isOpen) return;
     this.node.removeChild(this.container);
     this.isOpen = false;
+    this.btn.setAttribute('aria-expanded', 'false');
     this.btn.focus();
     this.workingDate = false;
   },
   handleFocusOut: function handleFocusOut() {
-    var _this2 = this;
+    var _this3 = this;
 
     window.setTimeout(function () {
-      if (_this2.container.contains(document.activeElement)) return;
-      _this2.close();
-      document.body.removeEventListener('focusout', _this2.boundHandleFocusOut);
+      if (_this3.container.contains(document.activeElement)) return;
+      _this3.close();
+      document.body.removeEventListener('focusout', _this3.boundHandleFocusOut);
     }, 16);
   },
   renderCalendar: function renderCalendar() {
-    this.container = elementFactory('div', {}, 'sdp-container');
+    this.container = elementFactory('div', { 'role': 'dialog', 'aria-helptext': ARIA_HELP_TEXT }, 'sdp-container');
     this.container.innerHTML = calendar();
     this.node.appendChild(this.container);
-    this.monthContainer = document.querySelector('.js-sdp__month');
+    this.monthContainer = document.querySelector(SELECTORS.MONTH_CONTAINER);
     this.renderMonth();
     this.initListeners();
   },
   renderMonth: function renderMonth() {
     this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate);
     this.monthContainer.innerHTML = month(this.monthView);
-    if (!this.container.querySelector('.sdp-day-btn[tabindex="0"]')) [].slice.call(this.container.querySelectorAll('.sdp-day-btn:not([disabled])')).shift().setAttribute('tabindex', '0');
+    if (!this.container.querySelector(SELECTORS.BTN_DEFAULT + '[tabindex="0"]')) [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_DEFAULT + ':not([disabled])')).shift().setAttribute('tabindex', '0');
   },
   initListeners: function initListeners() {
-    var _this3 = this;
+    var _this4 = this;
 
     TRIGGER_EVENTS.forEach(function (ev) {
-      _this3.container.addEventListener(ev, _this3.routeHandlers.bind(_this3));
+      _this4.container.addEventListener(ev, _this4.routeHandlers.bind(_this4));
     });
   },
   routeHandlers: function routeHandlers(e) {
     if (e.keyCode) this.handleKeyDown(e);else {
-      if (e.target.classList.contains('js-sdp-nav__btn') || e.target.parentNode.classList.contains('js-sdp-nav__btn')) this.handleNav(+(e.target.getAttribute('data-action') || e.target.parentNode.getAttribute('data-action')));
-      if (e.target.classList.contains('sdp-day-btn')) this.selectDate(e);
+      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute('data-action') || e.target.parentNode.getAttribute('data-action')));
+      if (e.target.classList.contains(SELECTORS.BTN_DEFAULT)) this.selectDate(e);
     }
   },
   handleNav: function handleNav(action) {
@@ -597,6 +618,10 @@ var componentPrototype = {
   },
   handleKeyDown: function handleKeyDown(e) {
     var keyDownDictionary = {
+      PAGE_UP: function PAGE_UP() {},
+      //?
+      PAGE_DOWN: function PAGE_DOWN() {},
+      //?
       TAB: function TAB() {
         /* 
         	- trap tab in focusable children??
@@ -607,7 +632,7 @@ var componentPrototype = {
       ENTER: function ENTER(e) {
         catchBubble(e);
         if (e.target.classList.contains('sdp-day-btn')) this.selectDate(e);
-        if (e.target.classList.contains('js-sdp-nav__btn')) this.handleNav(+e.target.getAttribute('data-action'));
+        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute('data-action'));
       },
       ESCAPE: function ESCAPE() {
         this.close();
@@ -679,23 +704,20 @@ var componentPrototype = {
     this.startDate = false;
     this.inputClone.value = '';
     this.input.value = '';
+    if (this.isOpen) this.close();
   },
   getValue: function getValue() {
     return this.startDate;
+  },
+  setValue: function setValue(nextValue) {
+    this.rootDate = parseDate(nextValue, this.settings.valueFormat);
+    this.rootDate.setHours(0, 0, 0, 0);
+    this.startDate = this.rootDate;
+    this.inputClone.value = formatDate(this.rootDate, this.settings.displayFormat);
+    this.input.value = this.startDate;
+    if (this.isOpen) this.workingDate = this.startDate, this.renderMonth();
   }
 };
-
-/*
-
-	Left: Move focus to the previous day. Will move to the last day of the previous month, if the current day is the first day of a month.
-	Right: Move focus to the next day. Will move to the first day of the following month, if the current day is the last day of a month.
-	Up: Move focus to the same day of the previous week. Will wrap to the appropriate day in the previous month.
-	Down: Move focus to the same day of the following week. Will wrap to the appropriate day in the following month.
-	Tab: Navigate between calander grid and previous/next selection buttons
-	Enter/Space: Select date
-	Escape: close calendar, no change
-
-*/
 
 var init = function init(sel, opts) {
   var els = [].slice.call(document.querySelectorAll(sel));
