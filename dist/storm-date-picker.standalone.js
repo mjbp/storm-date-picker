@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Fri, 01 Dec 2017 17:42:14 GMT
+ * @version 0.1.0: Sun, 03 Dec 2017 20:57:46 GMT
  * @author stormid
  * @license MIT
  */
@@ -510,14 +510,22 @@ var KEYCODES = {
 var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, or Escape to cancel.';
 
 var CLASSNAMES = {
-  NAV_BTN: 'js-sdp-nav__btn'
+  CONTAINER: 'sdp-container',
+  NAV_BTN: 'js-sdp-nav__btn',
+  BTN_DEFAULT: 'sdp-day-btn'
 };
 
 var SELECTORS = {
   BTN_DEFAULT: '.sdp-day-btn',
   BTN_ACTIVE: '.sdp-day-btn--is-active',
   BTN_TODAY: '.sdp-day-btn--is-today',
+  BTN_ENABLED: '.sdp-day-body:not(.sdp-day-disabled)',
   MONTH_CONTAINER: '.js-sdp__month'
+};
+
+var DATA_ATTRIBUTES = {
+  ACTION: 'data-action',
+  MODEL_INDEX: 'data-model-index'
 };
 
 var componentPrototype = {
@@ -587,7 +595,7 @@ var componentPrototype = {
     }, 16);
   },
   renderCalendar: function renderCalendar() {
-    this.container = elementFactory('div', { 'role': 'dialog', 'aria-helptext': ARIA_HELP_TEXT }, 'sdp-container');
+    this.container = elementFactory('div', { 'role': 'dialog', 'aria-helptext': ARIA_HELP_TEXT }, CLASSNAMES.CONTAINER);
     this.container.innerHTML = calendar();
     this.node.appendChild(this.container);
     this.monthContainer = document.querySelector(SELECTORS.MONTH_CONTAINER);
@@ -608,8 +616,8 @@ var componentPrototype = {
   },
   routeHandlers: function routeHandlers(e) {
     if (e.keyCode) this.handleKeyDown(e);else {
-      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute('data-action') || e.target.parentNode.getAttribute('data-action')));
-      if (e.target.classList.contains(SELECTORS.BTN_DEFAULT)) this.selectDate(e);
+      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION)));
+      if (e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
     }
   },
   handleNav: function handleNav(action) {
@@ -631,8 +639,8 @@ var componentPrototype = {
       },
       ENTER: function ENTER(e) {
         catchBubble(e);
-        if (e.target.classList.contains('sdp-day-btn')) this.selectDate(e);
-        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute('data-action'));
+        if (e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
+        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute(DATA_ATTRIBUTES.ACTION));
       },
       ESCAPE: function ESCAPE() {
         this.close();
@@ -642,58 +650,58 @@ var componentPrototype = {
       },
       LEFT: function LEFT(e) {
         catchBubble(e);
-        if (!e.target.classList.contains('sdp-day-btn')) return;
+        if (!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 
-        if (this.monthView.model[+e.target.getAttribute('data-model-index')].number === 1) {
+        if (this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === 1) {
           this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
           this.renderMonth();
-          [].slice.call(this.container.querySelectorAll('.sdp-day-body:not(.sdp-day-disabled)')).pop().firstElementChild.focus();
-        } else this.container.querySelector('[data-model-index="' + (+e.target.getAttribute('data-model-index') - 1) + '"]').focus();
+          [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).pop().firstElementChild.focus();
+        } else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 1) + '"]').focus();
       },
       UP: function UP() {
         catchBubble(e);
-        if (!e.target.classList.contains('sdp-day-btn')) return;
+        if (!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 
-        var nextDayIndex = +e.target.getAttribute('data-model-index') - 7;
+        var nextDayIndex = +e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 7;
 
-        if (+this.monthView.model[+e.target.getAttribute('data-model-index')].number - 7 < 1) {
+        if (+this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number - 7 < 1) {
           this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
           this.renderMonth();
           //use this.workingDate instead of querying DOM?
-          if (!this.container.querySelector('[data-model-index="' + (this.monthView.model.length + nextDayIndex) + '"]') || this.container.querySelector('[data-model-index="' + (this.monthView.model.length + nextDayIndex) + '"]') && this.container.querySelector('[data-model-index="' + (this.monthView.model.length + nextDayIndex) + '"]').hasAttribute('disabled')) this.container.querySelector('[data-model-index="' + (this.monthView.model.length + (nextDayIndex - 7)) + '"]').focus();else this.container.querySelector('[data-model-index="' + (this.monthView.model.length + nextDayIndex) + '"]').focus();
-        } else this.container.querySelector('[data-model-index="' + nextDayIndex + '"]').focus();
+          if (!this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (this.monthView.model.length + nextDayIndex) + '"]') || this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (this.monthView.model.length + nextDayIndex) + '"]') && this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (this.monthView.model.length + nextDayIndex) + '"]').hasAttribute('disabled')) this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (this.monthView.model.length + (nextDayIndex - 7)) + '"]').focus();else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (this.monthView.model.length + nextDayIndex) + '"]').focus();
+        } else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + nextDayIndex + '"]').focus();
       },
       RIGHT: function RIGHT(e) {
         catchBubble(e);
-        if (!e.target.classList.contains('sdp-day-btn')) return;
+        if (!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 
-        if (this.monthView.model[+e.target.getAttribute('data-model-index')].number === getMonthLength(this.monthView.model[+e.target.getAttribute('data-model-index')].date.getFullYear(), this.monthView.model[+e.target.getAttribute('data-model-index')].date.getMonth())) {
+        if (this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === getMonthLength(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getFullYear(), this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getMonth())) {
           this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1);
           this.renderMonth();
-          [].slice.call(this.container.querySelectorAll('.sdp-day-body:not(.sdp-day-disabled)')).shift().firstElementChild.focus();
-        } else this.container.querySelector('[data-model-index="' + (+e.target.getAttribute('data-model-index') + 1) + '"]').focus();
+          [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).shift().firstElementChild.focus();
+        } else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) + 1) + '"]').focus();
       },
       DOWN: function DOWN() {
         catchBubble(e);
-        if (!e.target.classList.contains('sdp-day-btn')) return;
+        if (!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 
-        var nextDate = +this.monthView.model[+e.target.getAttribute('data-model-index')].number + 7,
-            nextDayIndex = +e.target.getAttribute('data-model-index') + 7;
+        var nextDate = +this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number + 7,
+            nextDayIndex = +e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) + 7;
 
-        if (+this.monthView.model[+e.target.getAttribute('data-model-index')].number + 7 > getMonthLength(this.monthView.model[+e.target.getAttribute('data-model-index')].date.getFullYear(), this.monthView.model[+e.target.getAttribute('data-model-index')].date.getMonth())) {
+        if (+this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number + 7 > getMonthLength(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getFullYear(), this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getMonth())) {
           this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1);
           this.renderMonth();
           //use this.workingDate instead of querying DOM?
-          if (this.container.querySelector('[data-model-index="' + nextDayIndex % 7 + '"]').hasAttribute('disabled')) this.container.querySelector('[data-model-index="' + (nextDayIndex % 7 + 7) + '"]').focus();else this.container.querySelector('[data-model-index="' + nextDayIndex % 7 + '"]').focus();
-        } else this.container.querySelector('[data-model-index="' + nextDayIndex + '"]').focus();
+          if (this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + nextDayIndex % 7 + '"]').hasAttribute('disabled')) this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (nextDayIndex % 7 + 7) + '"]').focus();else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + nextDayIndex % 7 + '"]').focus();
+        } else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + nextDayIndex + '"]').focus();
       }
     };
     if (KEYCODES[e.keyCode] && keyDownDictionary[KEYCODES[e.keyCode]]) keyDownDictionary[KEYCODES[e.keyCode]].call(this, e);
   },
   selectDate: function selectDate(e) {
-    this.startDate = this.monthView.model[+e.target.getAttribute('data-model-index')].date;
+    e.target.classList.add(SELECTORS.BTN_ACTIVE);
+    this.startDate = this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date;
     this.rootDate = this.startDate;
-    e.target.classList.add('sdp-day-btn--is-active');
     this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
     this.input.value = formatDate(this.startDate, this.settings.valueFormat);
     this.close();

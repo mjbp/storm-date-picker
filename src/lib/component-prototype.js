@@ -15,7 +15,8 @@ import {
 	KEYCODES,
 	ARIA_HELP_TEXT,
 	CLASSNAMES,
-	SELECTORS
+	SELECTORS,
+	DATA_ATTRIBUTES
 } from './constants';
 
 export default {
@@ -80,7 +81,7 @@ export default {
 		}, 16);
 	},
 	renderCalendar(){
-		this.container = elementFactory('div', { 'role': 'dialog', 'aria-helptext': ARIA_HELP_TEXT }, 'sdp-container');
+		this.container = elementFactory('div', { 'role': 'dialog', 'aria-helptext': ARIA_HELP_TEXT }, CLASSNAMES.CONTAINER);
 		this.container.innerHTML = calendar();
 		this.node.appendChild(this.container);
 		this.monthContainer = document.querySelector(SELECTORS.MONTH_CONTAINER);
@@ -100,8 +101,8 @@ export default {
 	routeHandlers(e){
 		if(e.keyCode) this.handleKeyDown(e);
 		else {
-			if(e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute('data-action') || e.target.parentNode.getAttribute('data-action')));
-			if(e.target.classList.contains(SELECTORS.BTN_DEFAULT)) this.selectDate(e);
+			if(e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION)));
+			if(e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
 		}
 	},
 	handleNav(action){
@@ -121,73 +122,73 @@ export default {
 			},
 			ENTER(e){
 				catchBubble(e);
-				if(e.target.classList.contains('sdp-day-btn')) this.selectDate(e);
-				if(e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute('data-action'));
+				if(e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
+				if(e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute(DATA_ATTRIBUTES.ACTION));
 			},
 			ESCAPE(){ this.close(); },
 			SPACE(e) { keyDownDictionary.ENTER(e); },
 			LEFT(e){
 				catchBubble(e);
-				if(!e.target.classList.contains('sdp-day-btn')) return;
+				if(!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 
-				if(this.monthView.model[+e.target.getAttribute('data-model-index')].number === 1) {
+				if(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === 1) {
 					this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
 					this.renderMonth();
-					[].slice.call(this.container.querySelectorAll('.sdp-day-body:not(.sdp-day-disabled)')).pop().firstElementChild.focus();
+					[].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).pop().firstElementChild.focus();
 				}
-				else this.container.querySelector(`[data-model-index="${+e.target.getAttribute('data-model-index') - 1}"]`).focus();
+				else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 1}"]`).focus();
 			},
 			UP(){
 				catchBubble(e);
-				if(!e.target.classList.contains('sdp-day-btn')) return;
+				if(!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 				
-				let nextDayIndex = +e.target.getAttribute('data-model-index') - 7;
+				let nextDayIndex = +e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 7;
 
-				if(+this.monthView.model[+e.target.getAttribute('data-model-index')].number - 7 < 1) {
+				if(+this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number - 7 < 1) {
 					this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
 					this.renderMonth();
 					//use this.workingDate instead of querying DOM?
-					if(!this.container.querySelector(`[data-model-index="${this.monthView.model.length + nextDayIndex}"]`)|| this.container.querySelector(`[data-model-index="${this.monthView.model.length + nextDayIndex}"]`) && this.container.querySelector(`[data-model-index="${this.monthView.model.length + nextDayIndex}"]`).hasAttribute('disabled')) 
-						this.container.querySelector(`[data-model-index="${this.monthView.model.length + (nextDayIndex - 7)}"]`).focus();
-					else this.container.querySelector(`[data-model-index="${this.monthView.model.length + nextDayIndex}"]`).focus();
+					if(!this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${this.monthView.model.length + nextDayIndex}"]`)|| this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${this.monthView.model.length + nextDayIndex}"]`) && this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${this.monthView.model.length + nextDayIndex}"]`).hasAttribute('disabled')) 
+						this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${this.monthView.model.length + (nextDayIndex - 7)}"]`).focus();
+					else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${this.monthView.model.length + nextDayIndex}"]`).focus();
 				}
-				else this.container.querySelector(`[data-model-index="${nextDayIndex}"]`).focus();
+				else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${nextDayIndex}"]`).focus();
 			},
 			RIGHT(e){
 				catchBubble(e);
-				if(!e.target.classList.contains('sdp-day-btn')) return;
+				if(!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 				
-				if(this.monthView.model[+e.target.getAttribute('data-model-index')].number === getMonthLength(this.monthView.model[+e.target.getAttribute('data-model-index')].date.getFullYear(), this.monthView.model[+e.target.getAttribute('data-model-index')].date.getMonth())) {
+				if(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === getMonthLength(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getFullYear(), this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getMonth())) {
 					this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1);
 					this.renderMonth();
-					[].slice.call(this.container.querySelectorAll('.sdp-day-body:not(.sdp-day-disabled)')).shift().firstElementChild.focus();
+					[].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).shift().firstElementChild.focus();
 				}
-				else this.container.querySelector(`[data-model-index="${+e.target.getAttribute('data-model-index') + 1}"]`).focus();
+				else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) + 1}"]`).focus();
 				
 			},
 			DOWN(){
 				catchBubble(e);
-				if(!e.target.classList.contains('sdp-day-btn')) return;
+				if(!e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) return;
 
-				let nextDate = +this.monthView.model[+e.target.getAttribute('data-model-index')].number + 7,
-					nextDayIndex = +e.target.getAttribute('data-model-index') + 7;
+				let nextDate = +this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number + 7,
+					nextDayIndex = +e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) + 7;
 
-				if(+this.monthView.model[+e.target.getAttribute('data-model-index')].number + 7 > getMonthLength(this.monthView.model[+e.target.getAttribute('data-model-index')].date.getFullYear(), this.monthView.model[+e.target.getAttribute('data-model-index')].date.getMonth())) {
+				if(+this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number + 7 > getMonthLength(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getFullYear(), this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date.getMonth())) {
 					this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1);
 					this.renderMonth();
 					//use this.workingDate instead of querying DOM?
-					if(this.container.querySelector(`[data-model-index="${nextDayIndex % 7}"]`).hasAttribute('disabled')) this.container.querySelector(`[data-model-index="${(nextDayIndex % 7) + 7}"]`).focus();
-					else this.container.querySelector(`[data-model-index="${nextDayIndex % 7}"]`).focus();
+					if(this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${nextDayIndex % 7}"]`).hasAttribute('disabled')) this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${(nextDayIndex % 7) + 7}"]`).focus();
+					else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${nextDayIndex % 7}"]`).focus();
 				}
-				else this.container.querySelector(`[data-model-index="${nextDayIndex}"]`).focus();
+				else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${nextDayIndex}"]`).focus();
 			}
 		};
 		if(KEYCODES[e.keyCode] && keyDownDictionary[KEYCODES[e.keyCode]]) keyDownDictionary[KEYCODES[e.keyCode]].call(this, e);
 	},
 	selectDate(e){
-		this.startDate = this.monthView.model[+e.target.getAttribute('data-model-index')].date;
+		e.target.classList.add(SELECTORS.BTN_ACTIVE);
+		this.startDate = this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date;
 		this.rootDate = this.startDate;
-		e.target.classList.add('sdp-day-btn--is-active');
 		this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
 		this.input.value = formatDate(this.startDate, this.settings.valueFormat);
 		this.close();
