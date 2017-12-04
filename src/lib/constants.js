@@ -15,10 +15,15 @@ export const KEYCODES = {
 
 export const ARIA_HELP_TEXT = `Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, or Escape to cancel.`;
 
+/*
+ to do:
+ combine CLASSNAMES and SELECTORS (remove SELETORS and append dot manually)
+*/
 export const CLASSNAMES = {
     CONTAINER: 'sdp-container',
     NAV_BTN: 'js-sdp-nav__btn',
-    BTN_DEFAULT: 'sdp-day-btn'
+    BTN_DEFAULT: 'sdp-day-btn',
+    MONTH_CONTAINER: 'js-sdp__month'
 };
 
 export const SELECTORS = {

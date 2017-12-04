@@ -187,10 +187,7 @@ export default {
 	},
 	selectDate(e){
 		e.target.classList.add(SELECTORS.BTN_ACTIVE);
-		this.startDate = this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date;
-		this.rootDate = this.startDate;
-		this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
-		this.input.value = formatDate(this.startDate, this.settings.valueFormat);
+		this.setDate(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date);		
 		this.close();
 	},
 	reset(){
@@ -201,13 +198,15 @@ export default {
 		this.input.value = '';
 		if(this.isOpen) this.close();
 	},
+	setDate(nextDate){
+		this.startDate = nextDate;
+		this.rootDate = this.startDate;
+		this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
+		this.input.value = formatDate(this.startDate, this.settings.valueFormat);
+	},
 	getValue(){ return this.startDate; },
-	setValue(nextValue){
-		this.rootDate = parseDate(nextValue, this.settings.valueFormat);
-		this.rootDate.setHours(0,0,0,0);
-		this.startDate = this.rootDate;
-		this.inputClone.value = formatDate(this.rootDate, this.settings.displayFormat);
-		this.input.value = this.startDate;
+	setValue(nextValue, format = this.settings.valueFormat){
+		this.setDate(parseDate(nextValue, format));
 		if(this.isOpen) this.workingDate = this.startDate, this.renderMonth();
 	}
 };

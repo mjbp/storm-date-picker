@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Sun, 03 Dec 2017 20:57:46 GMT
+ * @version 0.1.0: Mon, 04 Dec 2017 10:34:26 GMT
  * @author stormid
  * @license MIT
  */
@@ -474,24 +474,6 @@ var elementFactory = function elementFactory(type) {
   return el;
 };
 
-var calendar = function calendar(props) {
-  return '<div class="sdp-date">\n                                        <button class="js-sdp-nav__btn sdp-back" type="button" data-action="-1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="js-sdp-nav__btn sdp-next" type="button" data-action="1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="js-sdp__month"></div>\n                                    </div>';
-};
-
-var month = function month(props) {
-  return '<div class="sdp-month-label">' + props.monthTitle + ' ' + props.yearTitle + '</div>\n                        <table class="sdp-days">\n                            <thead class="sdp-days-head">\n                                <tr class="sdp-days-row">\n                                    <th class="sdp-day-head">Mo</th>\n                                    <th class="sdp-day-head">Tu</th>\n                                    <th class="sdp-day-head">We</th>\n                                    <th class="sdp-day-head">Th</th>\n                                    <th class="sdp-day-head">Fr</th>\n                                    <th class="sdp-day-head">Sa</th>\n                                    <th class="sdp-day-head">Su</th>\n                                </tr>\n                            </thead>\n                            <tbody class="sdp-days-body">\n                                ' + props.model.map(weeks(props.active)).join('') + '\n                            </tbody>\n                        </table>';
-};
-
-var day = function day(activeDays, props, i) {
-  return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button tabindex="' + (props.isStartDate ? 0 : props.isToday ? 0 : -1) + '" class="sdp-day-btn' + (props.isToday ? ' sdp-day-btn--is-today' : '') + (props.isStartDate ? ' sdp-day-btn--is-active' : '') + '" role="button" data-model-index="' + i + '" aria-label="' + (props.isToday ? 'Today, ' : '') + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
-};
-
-var weeks = function weeks(activeDays) {
-  return function (props, i, arr) {
-    if (i === 0) return '<tr class="sdp-days-row">' + day(activeDays, props, i);else if (i === arr.length - 1) return day(activeDays, props, i) + '</tr>';else if ((i + 1) % 7 === 0) return day(activeDays, props, i) + '</tr><tr class="sdp-days-row">';else return day(activeDays, props, i);
-  };
-};
-
 var TRIGGER_EVENTS = ['click', 'keydown'];
 
 var TRIGGER_KEYCODES = [13, 32];
@@ -509,10 +491,15 @@ var KEYCODES = {
 
 var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, or Escape to cancel.';
 
+/*
+ to do:
+ combine CLASSNAMES and SELECTORS (remove SELETORS and append dot manually)
+*/
 var CLASSNAMES = {
   CONTAINER: 'sdp-container',
   NAV_BTN: 'js-sdp-nav__btn',
-  BTN_DEFAULT: 'sdp-day-btn'
+  BTN_DEFAULT: 'sdp-day-btn',
+  MONTH_CONTAINER: 'js-sdp__month'
 };
 
 var SELECTORS = {
@@ -526,6 +513,24 @@ var SELECTORS = {
 var DATA_ATTRIBUTES = {
   ACTION: 'data-action',
   MODEL_INDEX: 'data-model-index'
+};
+
+var calendar = function calendar(props) {
+  return '<div class="sdp-date">\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-back" type="button" data-action="-1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-next" type="button" data-action="1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="' + CLASSNAMES.MONTH_CONTAINER + '"></div>\n                                    </div>';
+};
+
+var month = function month(props) {
+  return '<div class="sdp-month-label">' + props.monthTitle + ' ' + props.yearTitle + '</div>\n                        <table class="sdp-days">\n                            <thead class="sdp-days-head">\n                                <tr class="sdp-days-row">\n                                    <th class="sdp-day-head">Mo</th>\n                                    <th class="sdp-day-head">Tu</th>\n                                    <th class="sdp-day-head">We</th>\n                                    <th class="sdp-day-head">Th</th>\n                                    <th class="sdp-day-head">Fr</th>\n                                    <th class="sdp-day-head">Sa</th>\n                                    <th class="sdp-day-head">Su</th>\n                                </tr>\n                            </thead>\n                            <tbody class="sdp-days-body">\n                                ' + props.model.map(weeks(props.active)).join('') + '\n                            </tbody>\n                        </table>';
+};
+
+var day = function day(activeDays, props, i) {
+  return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button tabindex="' + (props.isStartDate ? 0 : props.isToday ? 0 : -1) + '" class="sdp-day-btn' + (props.isToday ? ' sdp-day-btn--is-today' : '') + (props.isStartDate ? ' sdp-day-btn--is-active' : '') + '" role="button" data-model-index="' + i + '" aria-label="' + (props.isToday ? 'Today, ' : '') + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
+};
+
+var weeks = function weeks(activeDays) {
+  return function (props, i, arr) {
+    if (i === 0) return '<tr class="sdp-days-row">' + day(activeDays, props, i);else if (i === arr.length - 1) return day(activeDays, props, i) + '</tr>';else if ((i + 1) % 7 === 0) return day(activeDays, props, i) + '</tr><tr class="sdp-days-row">';else return day(activeDays, props, i);
+  };
 };
 
 var componentPrototype = {
@@ -700,10 +705,7 @@ var componentPrototype = {
   },
   selectDate: function selectDate(e) {
     e.target.classList.add(SELECTORS.BTN_ACTIVE);
-    this.startDate = this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date;
-    this.rootDate = this.startDate;
-    this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
-    this.input.value = formatDate(this.startDate, this.settings.valueFormat);
+    this.setDate(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date);
     this.close();
   },
   reset: function reset() {
@@ -714,15 +716,19 @@ var componentPrototype = {
     this.input.value = '';
     if (this.isOpen) this.close();
   },
+  setDate: function setDate(nextDate) {
+    this.startDate = nextDate;
+    this.rootDate = this.startDate;
+    this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
+    this.input.value = formatDate(this.startDate, this.settings.valueFormat);
+  },
   getValue: function getValue() {
     return this.startDate;
   },
   setValue: function setValue(nextValue) {
-    this.rootDate = parseDate(nextValue, this.settings.valueFormat);
-    this.rootDate.setHours(0, 0, 0, 0);
-    this.startDate = this.rootDate;
-    this.inputClone.value = formatDate(this.rootDate, this.settings.displayFormat);
-    this.input.value = this.startDate;
+    var format = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.settings.valueFormat;
+
+    this.setDate(parseDate(nextValue, format));
     if (this.isOpen) this.workingDate = this.startDate, this.renderMonth();
   }
 };
@@ -733,14 +739,24 @@ var init = function init(sel, opts) {
 
   if (!els.length) return console.warn('Date picker not initialised, no augmentable elements found');
 
-  return els.map(function (el) {
-    return Object.assign(Object.create(componentPrototype), {
-      node: el,
-      input: el.querySelector('input'),
-      btn: el.querySelector('.btn'),
-      settings: Object.assign({}, defaults, opts)
-    }).init();
-  });
+  return {
+    pickers: els.map(function (el) {
+      return Object.assign(Object.create(componentPrototype), {
+        node: el,
+        input: el.querySelector('input'),
+        btn: el.querySelector('.btn'),
+        settings: Object.assign({}, defaults, opts)
+      }).init();
+    }),
+    find: function find(sel) {
+      var candidate = document.querySelector(sel);
+      if (!candidate) return console.warn('Date picker not found for this selector');
+      return this.pickers.reduce(function (acc, curr) {
+        if (curr.node === candidate) acc = curr;
+        return acc;
+      }, false);
+    }
+  };
 };
 
 var index = { init: init };

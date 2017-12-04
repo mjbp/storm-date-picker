@@ -7,14 +7,24 @@ const init = (sel, opts) => {
 
 	if(!els.length) return console.warn('Date picker not initialised, no augmentable elements found');
     
-	return els.map((el) => {
-		return Object.assign(Object.create(componentPrototype), {
-			node: el, 
-			input: el.querySelector('input'),
-			btn: el.querySelector('.btn'),
-			settings: Object.assign({}, defaults, opts)
-		}).init();
-	});
+	return {
+		pickers: els.map((el) => {
+			return Object.assign(Object.create(componentPrototype), {
+				node: el, 
+				input: el.querySelector('input'),
+				btn: el.querySelector('.btn'),
+				settings: Object.assign({}, defaults, opts)
+			}).init();
+		}),
+		find(sel){
+			let candidate = document.querySelector(sel);
+			if(!candidate) return console.warn('Date picker not found for this selector');
+			return this.pickers.reduce((acc, curr) => {
+				if(curr.node === candidate) acc = curr;
+				return acc;
+			}, false);
+		}
+	};
 };
 
 export default { init };
