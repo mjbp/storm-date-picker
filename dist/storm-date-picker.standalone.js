@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Mon, 04 Dec 2017 10:34:26 GMT
+ * @version 0.1.0: Tue, 26 Dec 2017 21:12:42 GMT
  * @author stormid
  * @license MIT
  */
@@ -483,13 +483,15 @@ var KEYCODES = {
   13: 'ENTER',
   27: 'ESCAPE',
   32: 'SPACE',
+  33: 'PAGE_UP',
+  34: 'PAGE_DOWN',
   37: 'LEFT',
   38: 'UP',
   39: 'RIGHT',
   40: 'DOWN'
 };
 
-var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, or Escape to cancel.';
+var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, and Escape to cancel.';
 
 /*
  to do:
@@ -512,7 +514,8 @@ var SELECTORS = {
 
 var DATA_ATTRIBUTES = {
   ACTION: 'data-action',
-  MODEL_INDEX: 'data-model-index'
+  MODEL_INDEX: 'data-model-index',
+  DAY: 'data-day'
 };
 
 var calendar = function calendar(props) {
@@ -524,7 +527,7 @@ var month = function month(props) {
 };
 
 var day = function day(activeDays, props, i) {
-  return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button tabindex="' + (props.isStartDate ? 0 : props.isToday ? 0 : -1) + '" class="sdp-day-btn' + (props.isToday ? ' sdp-day-btn--is-today' : '') + (props.isStartDate ? ' sdp-day-btn--is-active' : '') + '" role="button" data-model-index="' + i + '" aria-label="' + (props.isToday ? 'Today, ' : '') + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
+  return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button tabindex="' + (props.isStartDate ? 0 : props.isToday ? 0 : -1) + '" class="sdp-day-btn' + (props.isToday ? ' sdp-day-btn--is-today' : '') + (props.isStartDate ? ' sdp-day-btn--is-active' : '') + '" role="button" data-day="' + props.number + '" data-model-index="' + i + '" aria-label="' + (props.isToday ? 'Today, ' : '') + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
 };
 
 var weeks = function weeks(activeDays) {
@@ -631,9 +634,21 @@ var componentPrototype = {
   },
   handleKeyDown: function handleKeyDown(e) {
     var keyDownDictionary = {
-      PAGE_UP: function PAGE_UP() {},
+      PAGE_UP: function PAGE_UP() {
+        catchBubble(e);
+        this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, this.workingDate.getDate());
+        this.renderMonth();
+        //focus on last DoM if greater than length of month
+        this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + e.target.getAttribute(DATA_ATTRIBUTES.DAY) + '"]:not(:disabled)').focus();
+      },
       //?
-      PAGE_DOWN: function PAGE_DOWN() {},
+      PAGE_DOWN: function PAGE_DOWN() {
+        catchBubble(e);
+        this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1, this.workingDate.getDate());
+        this.renderMonth();
+        //focus on last DoM if greater than length of month
+        this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + e.target.getAttribute(DATA_ATTRIBUTES.DAY) + '"]:not(:disabled)').focus();
+      },
       //?
       TAB: function TAB() {
         /* 

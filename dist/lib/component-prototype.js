@@ -111,8 +111,20 @@ export default {
 	},
 	handleKeyDown(e){
 		const keyDownDictionary = {
-			PAGE_UP(){},//?
-			PAGE_DOWN(){},//?
+			PAGE_UP(){
+				catchBubble(e);
+				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, this.workingDate.getDate());
+				this.renderMonth();
+				//focus on last DoM if greater than length of month
+				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${e.target.getAttribute(DATA_ATTRIBUTES.DAY)}"]:not(:disabled)`).focus();
+			},//?
+			PAGE_DOWN(){
+				catchBubble(e);
+				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1, this.workingDate.getDate());
+				this.renderMonth();
+				//focus on last DoM if greater than length of month
+				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${e.target.getAttribute(DATA_ATTRIBUTES.DAY)}"]:not(:disabled)`).focus();
+			},//?
 			TAB(){
 				/* 
 					- trap tab in focusable children??

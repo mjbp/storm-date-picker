@@ -7,13 +7,15 @@ export const KEYCODES = {
     13: 'ENTER',
     27: 'ESCAPE',
     32: 'SPACE',
+    33: 'PAGE_UP',
+    34: 'PAGE_DOWN',
     37: 'LEFT',
     38: 'UP',
     39: 'RIGHT',
     40: 'DOWN'
 };
 
-export const ARIA_HELP_TEXT = `Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, or Escape to cancel.`;
+export const ARIA_HELP_TEXT = `Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, and Escape to cancel.`;
 
 /*
  to do:
@@ -36,5 +38,6 @@ export const SELECTORS = {
 
 export const DATA_ATTRIBUTES = {
     ACTION: 'data-action',
-    MODEL_INDEX: 'data-model-index'
+    MODEL_INDEX: 'data-model-index',
+    DAY: 'data-day'
 };
