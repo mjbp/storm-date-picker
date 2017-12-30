@@ -38,7 +38,6 @@ export default {
 
 		this.rootDate = this.startDate || new Date();
 		this.rootDate.setHours(0,0,0,0);
-
 		this.settings.startOpen && this.open();
 		return this;
 	},
@@ -48,8 +47,9 @@ export default {
 		this.node.appendChild(this.inputClone);
 
 		this.inputClone.addEventListener('change', e => {
-			this.startDate = parseDate(this.inputClone.value, this.settings.displayFormat)//throws if parse error
-			this.input.value = this.startDate || '';
+			let candidate = parseDate(this.inputClone.value, this.settings.displayFormat)//false if parse fails
+			if(candidate) this.setDate(candidate);
+			else this.input.value = this.inputClone.value = '';
 		});
 	},
 	toggle(){
@@ -116,6 +116,7 @@ export default {
 				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, this.workingDate.getDate());
 				this.renderMonth();
 				//focus on last DoM if greater than length of month
+
 				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${e.target.getAttribute(DATA_ATTRIBUTES.DAY)}"]:not(:disabled)`).focus();
 			},//?
 			PAGE_DOWN(){

@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Tue, 26 Dec 2017 21:12:42 GMT
+ * @version 0.1.0: Sat, 30 Dec 2017 19:42:31 GMT
  * @author stormid
  * @license MIT
  */
@@ -381,14 +381,13 @@ var formatDate = fecha$1.format;
 var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
 var catchBubble = function catchBubble(e) {
   e.stopImmediatePropagation();
   e.preventDefault();
 };
 
-var getMonthLength = function getMonthLength(year, month) {
-  return new Date(year, month + 1, 0).getDate();
+var getMonthLength = function getMonthLength(y, m) {
+  return new Date(y, m + 1, 0).getDate();
 };
 
 var isToday = function isToday(candidate) {
@@ -557,7 +556,6 @@ var componentPrototype = {
 
     this.rootDate = this.startDate || new Date();
     this.rootDate.setHours(0, 0, 0, 0);
-
     this.settings.startOpen && this.open();
     return this;
   },
@@ -569,8 +567,8 @@ var componentPrototype = {
     this.node.appendChild(this.inputClone);
 
     this.inputClone.addEventListener('change', function (e) {
-      _this2.startDate = parseDate(_this2.inputClone.value, _this2.settings.displayFormat); //throws if parse error
-      _this2.input.value = _this2.startDate || '';
+      var candidate = parseDate(_this2.inputClone.value, _this2.settings.displayFormat); //false if parse fails
+      if (candidate) _this2.setDate(candidate);else _this2.input.value = _this2.inputClone.value = '';
     });
   },
   toggle: function toggle() {
@@ -639,6 +637,7 @@ var componentPrototype = {
         this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, this.workingDate.getDate());
         this.renderMonth();
         //focus on last DoM if greater than length of month
+
         this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + e.target.getAttribute(DATA_ATTRIBUTES.DAY) + '"]:not(:disabled)').focus();
       },
       //?

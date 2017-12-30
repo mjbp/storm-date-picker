@@ -7,13 +7,12 @@ export const formatDate = fecha.format;
 export const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
 export const catchBubble = e => {
     e.stopImmediatePropagation();
     e.preventDefault();
 };
 
-export const getMonthLength = (year, month) => new Date(year, (month + 1), 0).getDate();
+export const getMonthLength = (y, m) => new Date(y, (m + 1), 0).getDate();
 
 const isToday = candidate => {
     let today = new Date();
