@@ -13,6 +13,7 @@ const init = (sel, opts) => {
 				node: el, 
 				input: el.querySelector('input'),
 				btn: el.querySelector('.btn'),
+				btnClear: el.querySelector('.btn__clear'),
 				settings: Object.assign({}, defaults, opts)
 			}).init();
 		}),

@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Mon, 01 Jan 2018 18:54:37 GMT
+ * @version 0.1.0: Mon, 01 Jan 2018 19:50:07 GMT
  * @author stormid
  * @license MIT
  */
@@ -547,6 +547,10 @@ var componentPrototype = {
         catchBubble(e);
         _this.toggle();
       });
+      _this.btnClear && _this.btnClear.addEventListener(ev, function (e) {
+        if (!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
+        _this.reset();
+      });
     });
 
     this.boundHandleFocusOut = this.handleFocusOut.bind(this);
@@ -634,21 +638,19 @@ var componentPrototype = {
     var keyDownDictionary = {
       PAGE_UP: function PAGE_UP() {
         catchBubble(e);
-        var targetDay = getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
-        this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, targetDay);
-        this.renderMonth();
-        this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)').focus();
+        keyDownDictionary.PAGE.call(this, true);
       },
-      //?
       PAGE_DOWN: function PAGE_DOWN() {
         catchBubble(e);
-        var targetDay = getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
-        this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1, targetDay);
+        keyDownDictionary.PAGE.call(this, false);
+      },
+      PAGE: function PAGE(up) {
+        var nextMonth = up === true ? this.workingDate.getMonth() - 1 : this.workingDate.getMonth() + 1,
+            targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+        this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
         this.renderMonth();
-        //focus on last DoM if greater than length of month
         this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)').focus();
       },
-      //?
       TAB: function TAB() {
         /* 
         	- trap tab in focusable children??
@@ -759,6 +761,7 @@ var init = function init(sel, opts) {
         node: el,
         input: el.querySelector('input'),
         btn: el.querySelector('.btn'),
+        btnClear: el.querySelector('.btn__clear'),
         settings: Object.assign({}, defaults, opts)
       }).init();
     }),

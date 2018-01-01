@@ -29,6 +29,10 @@ export default {
 				catchBubble(e);
 				this.toggle();
 			});
+			this.btnClear && this.btnClear.addEventListener(ev, e => {
+				if(!!e.keyCode && !~TRIGGER_KEYCODES.indexOf(e.keyCode)) return;
+				this.reset();
+			});
 		});
 
 		this.boundHandleFocusOut = this.handleFocusOut.bind(this);
@@ -113,19 +117,19 @@ export default {
 		const keyDownDictionary = {
 			PAGE_UP(){
 				catchBubble(e);
-				let targetDay = getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
-				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, targetDay);
-				this.renderMonth();
-				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`).focus();
-			},//?
+				keyDownDictionary.PAGE.call(this, true);
+			},
 			PAGE_DOWN(){
 				catchBubble(e);
-				let targetDay = getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
-				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1, targetDay);
+				keyDownDictionary.PAGE.call(this, false);
+			},
+			PAGE(up){
+				let nextMonth = up === true ? this.workingDate.getMonth() - 1 : this.workingDate.getMonth() + 1,
+					targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+				this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
 				this.renderMonth();
-				//focus on last DoM if greater than length of month
 				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`).focus();
-			},//?
+			},
 			TAB(){
 				/* 
 					- trap tab in focusable children??

@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Mon, 01 Jan 2018 18:54:36 GMT
+ * @version 0.1.0: Mon, 01 Jan 2018 19:50:07 GMT
  * @author stormid
  * @license MIT
  */
@@ -19,6 +19,7 @@ const init = (sel, opts) => {
 				node: el, 
 				input: el.querySelector('input'),
 				btn: el.querySelector('.btn'),
+				btnClear: el.querySelector('.btn__clear'),
 				settings: Object.assign({}, defaults, opts)
 			}).init();
 		}),
