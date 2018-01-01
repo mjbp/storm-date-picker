@@ -113,18 +113,18 @@ export default {
 		const keyDownDictionary = {
 			PAGE_UP(){
 				catchBubble(e);
-				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, this.workingDate.getDate());
+				let targetDay = getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1, targetDay);
 				this.renderMonth();
-				//focus on last DoM if greater than length of month
-
-				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${e.target.getAttribute(DATA_ATTRIBUTES.DAY)}"]:not(:disabled)`).focus();
+				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`).focus();
 			},//?
 			PAGE_DOWN(){
 				catchBubble(e);
-				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1, this.workingDate.getDate());
+				let targetDay = getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+				this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + 1, targetDay);
 				this.renderMonth();
 				//focus on last DoM if greater than length of month
-				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${e.target.getAttribute(DATA_ATTRIBUTES.DAY)}"]:not(:disabled)`).focus();
+				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`).focus();
 			},//?
 			TAB(){
 				/* 
