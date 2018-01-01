@@ -11,9 +11,9 @@ const init = (sel, opts) => {
 		pickers: els.map((el) => {
 			return Object.assign(Object.create(componentPrototype), {
 				node: el, 
-				input: el.querySelector('input'),
-				btn: el.querySelector('.btn'),
-				btnClear: el.querySelector('.btn__clear'),
+				input: el.querySelector('.js-input'),
+				btn: el.querySelector('.js-btn'),
+				btnClear: el.querySelector('.js-btn__clear'),
 				settings: Object.assign({}, defaults, opts)
 			}).init();
 		}),

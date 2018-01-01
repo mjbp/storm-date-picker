@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Mon, 01 Jan 2018 19:50:07 GMT
+ * @version 0.1.0: Mon, 01 Jan 2018 20:35:47 GMT
  * @author stormid
  * @license MIT
  */
@@ -17,9 +17,9 @@ const init = (sel, opts) => {
 		pickers: els.map((el) => {
 			return Object.assign(Object.create(componentPrototype), {
 				node: el, 
-				input: el.querySelector('input'),
-				btn: el.querySelector('.btn'),
-				btnClear: el.querySelector('.btn__clear'),
+				input: el.querySelector('.js-input'),
+				btn: el.querySelector('.js-btn'),
+				btnClear: el.querySelector('.js-btn__clear'),
 				settings: Object.assign({}, defaults, opts)
 			}).init();
 		}),

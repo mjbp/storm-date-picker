@@ -1,7 +1,7 @@
 {
   "name": "storm-date-picker",
   "version": "0.1.0",
-  "description": "",
+  "description": "Lightweight, accessible date picker",
   "author": "stormid",
   "license": "MIT",
   "repository": {

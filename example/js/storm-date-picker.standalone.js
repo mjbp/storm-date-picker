@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: 
- * @version 0.1.0: Mon, 01 Jan 2018 19:50:07 GMT
+ * @version 0.1.0: Mon, 01 Jan 2018 20:30:25 GMT
  * @author stormid
  * @license MIT
  */
@@ -500,7 +500,8 @@ var CLASSNAMES = {
   CONTAINER: 'sdp-container',
   NAV_BTN: 'js-sdp-nav__btn',
   BTN_DEFAULT: 'sdp-day-btn',
-  MONTH_CONTAINER: 'js-sdp__month'
+  MONTH_CONTAINER: 'js-sdp__month',
+  HAS_VALUE: 'has--value'
 };
 
 var SELECTORS = {
@@ -730,6 +731,7 @@ var componentPrototype = {
     this.startDate = false;
     this.inputClone.value = '';
     this.input.value = '';
+    this.node.classList.remove(CLASSNAMES.HAS_VALUE);
     if (this.isOpen) this.close();
   },
   setDate: function setDate(nextDate) {
@@ -737,6 +739,7 @@ var componentPrototype = {
     this.rootDate = this.startDate;
     this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
     this.input.value = formatDate(this.startDate, this.settings.valueFormat);
+    !this.node.classList.contains(CLASSNAMES.HAS_VALUE) && this.node.classList.add(CLASSNAMES.HAS_VALUE);
   },
   getValue: function getValue() {
     return this.startDate;
@@ -759,9 +762,9 @@ var init = function init(sel, opts) {
     pickers: els.map(function (el) {
       return Object.assign(Object.create(componentPrototype), {
         node: el,
-        input: el.querySelector('input'),
-        btn: el.querySelector('.btn'),
-        btnClear: el.querySelector('.btn__clear'),
+        input: el.querySelector('.js-input'),
+        btn: el.querySelector('.js-btn'),
+        btnClear: el.querySelector('.js-btn__clear'),
         settings: Object.assign({}, defaults, opts)
       }).init();
     }),

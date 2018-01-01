@@ -204,7 +204,7 @@ export default {
 	},
 	selectDate(e){
 		e.target.classList.add(SELECTORS.BTN_ACTIVE);
-		this.setDate(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date);		
+		this.setDate(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].date);	
 		this.close();
 	},
 	reset(){
@@ -213,6 +213,7 @@ export default {
 		this.startDate = false;
 		this.inputClone.value = '';
 		this.input.value = '';
+		this.node.classList.remove(CLASSNAMES.HAS_VALUE);	
 		if(this.isOpen) this.close();
 	},
 	setDate(nextDate){
@@ -220,6 +221,7 @@ export default {
 		this.rootDate = this.startDate;
 		this.inputClone.value = formatDate(this.startDate, this.settings.displayFormat);
 		this.input.value = formatDate(this.startDate, this.settings.valueFormat);
+		!this.node.classList.contains(CLASSNAMES.HAS_VALUE) && this.node.classList.add(CLASSNAMES.HAS_VALUE);
 	},
 	getValue(){ return this.startDate; },
 	setValue(nextValue, format = this.settings.valueFormat){

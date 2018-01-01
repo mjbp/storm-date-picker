@@ -25,7 +25,8 @@ export const CLASSNAMES = {
     CONTAINER: 'sdp-container',
     NAV_BTN: 'js-sdp-nav__btn',
     BTN_DEFAULT: 'sdp-day-btn',
-    MONTH_CONTAINER: 'js-sdp__month'
+    MONTH_CONTAINER: 'js-sdp__month',
+    HAS_VALUE: 'has--value'
 };
 
 export const SELECTORS = {
