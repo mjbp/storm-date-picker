@@ -1,5 +1,4 @@
-import { CLASSNAMES } from './constants';
-import { dayNames, monthNames } from './utils';
+import { CLASSNAMES, MONTHS, DAYS } from './constants';
 
 export const calendar = props => `<div class="sdp-date">
                                         <button class="${CLASSNAMES.NAV_BTN} sdp-back" type="button" data-action="-1">
@@ -29,7 +28,7 @@ export const month = props => `<div class="sdp-month-label">${props.monthTitle} 
                             </tbody>
                         </table>`;
 
-const day = (activeDays, props, i) => `<td class="sdp-day-body${props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : ''}${props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : ''}${props.active ? ' sdp-day-selected' : ''}"><button tabindex="${props.isStartDate ? 0 : props.isToday ? 0 : -1}" class="sdp-day-btn${props.isToday ? ' sdp-day-btn--is-today' : ''}${props.isStartDate ? ' sdp-day-btn--is-active' : ''}" role="button" data-day="${props.number}" data-model-index="${i}" aria-label="${props.isToday ? 'Today, ' : ''}${dayNames[props.date.getDay()]}, ${monthNames[props.date.getMonth()]} ${props.date.getDate()}, ${props.date.getFullYear()}"${props.previousMonth || props.nextMonth ? " disabled" : ""}>${props.number}</button></td>`;
+const day = (activeDays, props, i) => `<td class="sdp-day-body${props.isOutOfRange ? ' sdp-day-disabled' : props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : ''}${props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : ''}${props.active ? ' sdp-day-selected' : ''}"><button tabindex="${props.isStartDate ? 0 : props.isToday ? 0 : -1}" class="sdp-day-btn${props.isToday ? ' sdp-day-btn--is-today' : ''}${props.isStartDate ? ' sdp-day-btn--is-active' : ''}" role="button" data-day="${props.number}" data-model-index="${i}" aria-label="${props.isToday ? 'Today, ' : ''}${DAYS[props.date.getDay()]}, ${MONTHS[props.date.getMonth()]} ${props.date.getDate()}, ${props.date.getFullYear()}"${props.previousMonth || props.nextMonth || props.isOutOfRange ? " disabled" : ""}>${props.number}</button></td>`;
 
 const weeks = activeDays => (props, i, arr) => {
     if(i === 0) return `<tr class="sdp-days-row">${day(activeDays, props, i)}`;

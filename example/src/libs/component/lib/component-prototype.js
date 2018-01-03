@@ -2,8 +2,6 @@ import {
 	elementFactory,
 	monthViewFactory,
 	catchBubble,
-	monthNames,
-	dayNames,
 	getMonthLength,
 	parseDate,
 	formatDate
@@ -35,6 +33,7 @@ export default {
 			});
 		});
 
+		this.setDateLimits();
 		this.boundHandleFocusOut = this.handleFocusOut.bind(this);
 
 		this.startDate = this.input.value ? parseDate(this.input.value, this.settings.valueFormat) : false;
@@ -44,6 +43,12 @@ export default {
 		this.rootDate.setHours(0,0,0,0);
 		this.settings.startOpen && this.open();
 		return this;
+	},
+	setDateLimits(){
+		['min', 'max'].forEach(limit => {
+			if(this.settings[`${limit}Date`] && !parseDate(this.settings[`${limit}Date`], this.settings.valueFormat)) return console.warn(`${limit}Date setting could not be parsed`);
+			this.settings[`${limit}Date`] = this.settings[`${limit}Date`] && parseDate(this.settings[`${limit}Date`], this.settings.valueFormat);
+		});
 	},
 	initClone(){
 		this.inputClone = elementFactory('input', { type: 'text', tabindex: -1}, this.input.className);
@@ -93,7 +98,7 @@ export default {
 		this.initListeners();
 	},
 	renderMonth(){
-		this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate);
+		this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate, this.settings.minDate, this.settings.maxDate);
 		this.monthContainer.innerHTML = month(this.monthView);
 		if(!this.container.querySelector(`${SELECTORS.BTN_DEFAULT}[tabindex="0"]`)) [].slice.call(this.container.querySelectorAll(`${SELECTORS.BTN_DEFAULT}:not([disabled])`)).shift().setAttribute('tabindex', '0');
 	},

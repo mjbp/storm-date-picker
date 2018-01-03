@@ -1,12 +1,10 @@
 import fecha from 'fecha';
+import { MONTHS } from './constants';
 
 export const parseDate = fecha.parse;
 
 export const formatDate = fecha.format;
 
-export const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-export const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 export const catchBubble = e => {
     e.stopImmediatePropagation();
     e.preventDefault();
@@ -22,7 +20,7 @@ const isToday = candidate => {
 
 const isStartDate = (startDate, candidate) => startDate.getTime() === candidate.getTime();
 
-const monthModel = (year, month, startDate) => {
+const monthModel = (year, month, startDate, minDate, maxDate) => {
     let theMonth = new Date(year, month + 1, 0),
         totalDays = theMonth.getDate(),
         endDay = theMonth.getDay(),
@@ -55,9 +53,11 @@ const monthModel = (year, month, startDate) => {
     }
     for(let i = 1; i <= totalDays; i++) {
         let tmpDate = new Date(year, month, i);
+        console.log(!(minDate && minDate.getTime() < tmpDate.getTime()) || !(maxDate && maxDate.getTime() > tmpDate.getTime()));
         output.push({ 
             number: i,
             date: tmpDate,
+            isOutOfRange: !(minDate && minDate.getTime() < tmpDate.getTime()) || !(maxDate && maxDate.getTime() > tmpDate.getTime()),
             isStartDate: startDate && isStartDate(startDate, tmpDate) || false,
             isToday: isToday(tmpDate)
         });
@@ -75,9 +75,9 @@ const monthModel = (year, month, startDate) => {
     return output;
 };
 
-export const monthViewFactory = (rootDate, startDate) => ({
-	model: monthModel(rootDate.getFullYear(), rootDate.getMonth(), startDate),
-	monthTitle: monthNames[rootDate.getMonth()],
+export const monthViewFactory = (rootDate, startDate, minDate, maxDate) => ({
+	model: monthModel(rootDate.getFullYear(), rootDate.getMonth(), startDate, minDate, maxDate),
+	monthTitle: MONTHS[rootDate.getMonth()],
 	yearTitle: rootDate.getFullYear()
 });
 
