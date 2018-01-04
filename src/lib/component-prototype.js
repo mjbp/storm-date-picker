@@ -133,7 +133,8 @@ export default {
 					targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
 				this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
 				this.renderMonth();
-				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`).focus();
+				let focusableDay = this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`);
+				focusableDay && focusableDay.focus();
 			},
 			TAB(){
 				/* 
@@ -156,7 +157,8 @@ export default {
 				if(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === 1) {
 					this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
 					this.renderMonth();
-					[].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).pop().firstElementChild.focus();
+					let focusableDays = [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED));
+					focusableDays.length > 0 && focusableDays.pop().firstElementChild.focus();
 				}
 				else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 1}"]`).focus();
 			},

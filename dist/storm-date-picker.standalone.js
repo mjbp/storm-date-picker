@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: Lightweight, accessible date picker
- * @version 0.1.0: Wed, 03 Jan 2018 21:20:24 GMT
+ * @version 0.1.0: Thu, 04 Jan 2018 16:39:04 GMT
  * @author stormid
  * @license MIT
  */
@@ -480,7 +480,6 @@ var monthModel = function monthModel(year, month, startDate, minDate, maxDate) {
   }
   for (var i = 1; i <= totalDays; i++) {
     var _tmpDate = new Date(year, month, i);
-    console.log(!(minDate && minDate.getTime() < _tmpDate.getTime()) || !(maxDate && maxDate.getTime() > _tmpDate.getTime()));
     output.push({
       number: i,
       date: _tmpDate,
@@ -664,7 +663,8 @@ var componentPrototype = {
             targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
         this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
         this.renderMonth();
-        this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)').focus();
+        var focusableDay = this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)');
+        focusableDay && focusableDay.focus();
       },
       TAB: function TAB() {
         /* 
@@ -691,7 +691,8 @@ var componentPrototype = {
         if (this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === 1) {
           this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
           this.renderMonth();
-          [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).pop().firstElementChild.focus();
+          var focusableDays = [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED));
+          focusableDays.length > 0 && focusableDays.pop().firstElementChild.focus();
         } else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 1) + '"]').focus();
       },
       UP: function UP() {

@@ -53,7 +53,6 @@ const monthModel = (year, month, startDate, minDate, maxDate) => {
     }
     for(let i = 1; i <= totalDays; i++) {
         let tmpDate = new Date(year, month, i);
-        console.log(!(minDate && minDate.getTime() < tmpDate.getTime()) || !(maxDate && maxDate.getTime() > tmpDate.getTime()));
         output.push({ 
             number: i,
             date: tmpDate,
