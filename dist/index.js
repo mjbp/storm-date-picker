@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: Lightweight, accessible date picker
- * @version 0.1.0: Wed, 03 Jan 2018 21:46:37 GMT
+ * @version 0.1.0: Mon, 15 Jan 2018 16:52:57 GMT
  * @author stormid
  * @license MIT
  */

@@ -1,12 +1,10 @@
 import fecha from 'fecha';
+import { MONTHS } from './constants';
 
 export const parseDate = fecha.parse;
 
 export const formatDate = fecha.format;
 
-export const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-export const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 export const catchBubble = e => {
     e.stopImmediatePropagation();
     e.preventDefault();
@@ -22,7 +20,7 @@ const isToday = candidate => {
 
 const isStartDate = (startDate, candidate) => startDate.getTime() === candidate.getTime();
 
-const monthModel = (year, month, startDate) => {
+const monthModel = (year, month, startDate, minDate, maxDate) => {
     let theMonth = new Date(year, month + 1, 0),
         totalDays = theMonth.getDate(),
         endDay = theMonth.getDay(),
@@ -58,6 +56,7 @@ const monthModel = (year, month, startDate) => {
         output.push({ 
             number: i,
             date: tmpDate,
+            isOutOfRange: !(minDate && minDate.getTime() <= tmpDate.getTime()) || !(maxDate && maxDate.getTime() > tmpDate.getTime()),
             isStartDate: startDate && isStartDate(startDate, tmpDate) || false,
             isToday: isToday(tmpDate)
         });
@@ -75,9 +74,9 @@ const monthModel = (year, month, startDate) => {
     return output;
 };
 
-export const monthViewFactory = (rootDate, startDate) => ({
-	model: monthModel(rootDate.getFullYear(), rootDate.getMonth(), startDate),
-	monthTitle: monthNames[rootDate.getMonth()],
+export const monthViewFactory = (rootDate, startDate, minDate, maxDate) => ({
+	model: monthModel(rootDate.getFullYear(), rootDate.getMonth(), startDate, minDate, maxDate),
+	monthTitle: MONTHS[rootDate.getMonth()],
 	yearTitle: rootDate.getFullYear()
 });
 
@@ -93,3 +92,24 @@ export const elementFactory = (type, attributes = {}, className) => {
 const focusableElements = ['a[href]', 'area[href]', 'input:not([disabled])', 'select:not([disabled])', 'textarea:not([disabled])', 'button:not([disabled])', 'iframe', 'object', 'embed', '[contenteditable]', '[tabindex]:not([tabindex="-1"])'];
 
 export const getFocusableChildren = node => [].slice.call(node.querySelectorAll(focusableElements.join(','))).filter(child => !!(child.offsetWidth || child.offsetHeight || child.getClientRects().length));
+
+export const dateIsOutOfBounds = (isNavigatingBack, workingDate, min, max) => {
+    let tmpDate = new Date(workingDate.getFullYear(), workingDate.getMonth(), 1);
+    
+    if(isNavigatingBack && min && tmpDate.getTime() <= min.getTime()) return true;
+    tmpDate.setDate(getMonthLength(tmpDate.getFullYear(), tmpDate.getMonth()));
+    if(!isNavigatingBack && max && tmpDate.getTime() >= max.getTime()) return true;
+    
+    return false;
+};
+
+export const getNextActiveDay = (nextMonth, activeDay, workingDate, isNavigatingBack, min, max) => {
+    let candidateDay = getMonthLength(workingDate.getFullYear(), nextMonth) < activeDay ? getMonthLength(workingDate.getFullYear(), nextMonth) : activeDay,
+        tmpDate = new Date(workingDate.getFullYear(), nextMonth, candidateDay);
+    
+    if(isNavigatingBack && min && tmpDate.getMonth() === min.getMonth() && tmpDate.getDate() < min.getDate()) return min.getDate();
+    if(!isNavigatingBack && max && tmpDate.getMonth() === max.getMonth() && tmpDate.getDate() > max.getDate()) return max.getDate() - 1;
+
+    return candidateDay;
+				
+};

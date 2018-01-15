@@ -1,6 +1,6 @@
 /**
- * @name storm-date-picker: 
- * @version 0.1.0: Mon, 01 Jan 2018 20:35:49 GMT
+ * @name storm-date-picker: Lightweight, accessible date picker
+ * @version 0.1.0: Mon, 15 Jan 2018 16:52:58 GMT
  * @author stormid
  * @license MIT
  */
@@ -27,6 +27,8 @@ var defaults = {
   callback: null,
   startOpen: false,
   startDate: false,
+  minDate: false,
+  maxDate: false,
   // closeOnSelect: false,
   displayFormat: 'dddd MMMM D, YYYY', //Thursday January 12, 2017
   valueFormat: 'DD/MM/YYYY'
@@ -374,13 +376,59 @@ var fecha$1 = createCommonjsModule(function (module) {
   })(commonjsGlobal);
 });
 
+var TRIGGER_EVENTS = ['click', 'keydown'];
+
+var TRIGGER_KEYCODES = [13, 32];
+
+var KEYCODES = {
+  9: 'TAB',
+  13: 'ENTER',
+  27: 'ESCAPE',
+  32: 'SPACE',
+  33: 'PAGE_UP',
+  34: 'PAGE_DOWN',
+  37: 'LEFT',
+  38: 'UP',
+  39: 'RIGHT',
+  40: 'DOWN'
+};
+
+var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, and Escape to cancel.';
+
+/*
+ to do:
+ combine CLASSNAMES and SELECTORS (remove SELETORS and append dot manually)
+*/
+var CLASSNAMES = {
+  CONTAINER: 'sdp-container',
+  NAV_BTN: 'js-sdp-nav__btn',
+  BTN_DEFAULT: 'sdp-day-btn',
+  MONTH_CONTAINER: 'js-sdp__month',
+  HAS_VALUE: 'has--value'
+};
+
+var SELECTORS = {
+  BTN_DEFAULT: '.sdp-day-btn',
+  BTN_ACTIVE: '.sdp-day-btn--is-active',
+  BTN_TODAY: '.sdp-day-btn--is-today',
+  BTN_ENABLED: '.sdp-day-body:not(.sdp-day-disabled)',
+  MONTH_CONTAINER: '.js-sdp__month'
+};
+
+var DATA_ATTRIBUTES = {
+  ACTION: 'data-action',
+  MODEL_INDEX: 'data-model-index',
+  DAY: 'data-day'
+};
+
 var parseDate = fecha$1.parse;
 
 var formatDate = fecha$1.format;
 
-var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 var catchBubble = function catchBubble(e) {
   e.stopImmediatePropagation();
   e.preventDefault();
@@ -400,7 +448,7 @@ var isStartDate = function isStartDate(startDate, candidate) {
   return startDate.getTime() === candidate.getTime();
 };
 
-var monthModel = function monthModel(year, month, startDate) {
+var monthModel = function monthModel(year, month, startDate, minDate, maxDate) {
   var theMonth = new Date(year, month + 1, 0),
       totalDays = theMonth.getDate(),
       endDay = theMonth.getDay(),
@@ -435,6 +483,7 @@ var monthModel = function monthModel(year, month, startDate) {
     output.push({
       number: i,
       date: _tmpDate,
+      isOutOfRange: !(minDate && minDate.getTime() <= _tmpDate.getTime()) || !(maxDate && maxDate.getTime() > _tmpDate.getTime()),
       isStartDate: startDate && isStartDate(startDate, _tmpDate) || false,
       isToday: isToday(_tmpDate)
     });
@@ -452,10 +501,10 @@ var monthModel = function monthModel(year, month, startDate) {
   return output;
 };
 
-var monthViewFactory = function monthViewFactory(rootDate, startDate) {
+var monthViewFactory = function monthViewFactory(rootDate, startDate, minDate, maxDate) {
   return {
-    model: monthModel(rootDate.getFullYear(), rootDate.getMonth(), startDate),
-    monthTitle: monthNames[rootDate.getMonth()],
+    model: monthModel(rootDate.getFullYear(), rootDate.getMonth(), startDate, minDate, maxDate),
+    monthTitle: MONTHS[rootDate.getMonth()],
     yearTitle: rootDate.getFullYear()
   };
 };
@@ -473,53 +522,28 @@ var elementFactory = function elementFactory(type) {
   return el;
 };
 
-var TRIGGER_EVENTS = ['click', 'keydown'];
+var dateIsOutOfBounds = function dateIsOutOfBounds(isNavigatingBack, workingDate, min, max) {
+  var tmpDate = new Date(workingDate.getFullYear(), workingDate.getMonth(), 1);
 
-var TRIGGER_KEYCODES = [13, 32];
+  if (isNavigatingBack && min && tmpDate.getTime() <= min.getTime()) return true;
+  tmpDate.setDate(getMonthLength(tmpDate.getFullYear(), tmpDate.getMonth()));
+  if (!isNavigatingBack && max && tmpDate.getTime() >= max.getTime()) return true;
 
-var KEYCODES = {
-  9: 'TAB',
-  13: 'ENTER',
-  27: 'ESCAPE',
-  32: 'SPACE',
-  33: 'PAGE_UP',
-  34: 'PAGE_DOWN',
-  37: 'LEFT',
-  38: 'UP',
-  39: 'RIGHT',
-  40: 'DOWN'
+  return false;
 };
 
-var ARIA_HELP_TEXT = 'Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Enter or Space to select a date, and Escape to cancel.';
+var getNextActiveDay = function getNextActiveDay(nextMonth, activeDay, workingDate, isNavigatingBack, min, max) {
+  var candidateDay = getMonthLength(workingDate.getFullYear(), nextMonth) < activeDay ? getMonthLength(workingDate.getFullYear(), nextMonth) : activeDay,
+      tmpDate = new Date(workingDate.getFullYear(), nextMonth, candidateDay);
 
-/*
- to do:
- combine CLASSNAMES and SELECTORS (remove SELETORS and append dot manually)
-*/
-var CLASSNAMES = {
-  CONTAINER: 'sdp-container',
-  NAV_BTN: 'js-sdp-nav__btn',
-  BTN_DEFAULT: 'sdp-day-btn',
-  MONTH_CONTAINER: 'js-sdp__month',
-  HAS_VALUE: 'has--value'
-};
+  if (isNavigatingBack && min && tmpDate.getMonth() === min.getMonth() && tmpDate.getDate() < min.getDate()) return min.getDate();
+  if (!isNavigatingBack && max && tmpDate.getMonth() === max.getMonth() && tmpDate.getDate() > max.getDate()) return max.getDate() - 1;
 
-var SELECTORS = {
-  BTN_DEFAULT: '.sdp-day-btn',
-  BTN_ACTIVE: '.sdp-day-btn--is-active',
-  BTN_TODAY: '.sdp-day-btn--is-today',
-  BTN_ENABLED: '.sdp-day-body:not(.sdp-day-disabled)',
-  MONTH_CONTAINER: '.js-sdp__month'
-};
-
-var DATA_ATTRIBUTES = {
-  ACTION: 'data-action',
-  MODEL_INDEX: 'data-model-index',
-  DAY: 'data-day'
+  return candidateDay;
 };
 
 var calendar = function calendar(props) {
-  return '<div class="sdp-date">\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-back" type="button" data-action="-1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-next" type="button" data-action="1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="' + CLASSNAMES.MONTH_CONTAINER + '"></div>\n                                    </div>';
+  return '<div class="sdp-date">\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-back" type="button" data-action="-1">\n                                            <svg focusable="false" class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-next" type="button" data-action="1">\n                                            <svg focusable="false" class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="' + CLASSNAMES.MONTH_CONTAINER + '"></div>\n                                    </div>';
 };
 
 var month = function month(props) {
@@ -527,7 +551,7 @@ var month = function month(props) {
 };
 
 var day = function day(activeDays, props, i) {
-  return '<td class="sdp-day-body' + (props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button tabindex="' + (props.isStartDate ? 0 : props.isToday ? 0 : -1) + '" class="sdp-day-btn' + (props.isToday ? ' sdp-day-btn--is-today' : '') + (props.isStartDate ? ' sdp-day-btn--is-active' : '') + '" role="button" data-day="' + props.number + '" data-model-index="' + i + '" aria-label="' + (props.isToday ? 'Today, ' : '') + dayNames[props.date.getDay()] + ', ' + monthNames[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth ? " disabled" : "") + '>' + props.number + '</button></td>';
+  return '<td class="sdp-day-body' + (props.isOutOfRange ? ' sdp-day-disabled' : props.nextMonth ? ' sdp-day-next-month sdp-day-disabled' : '') + (props.previousMonth ? ' sdp-day-prev-month sdp-day-disabled' : '') + (props.active ? ' sdp-day-selected' : '') + '"><button tabindex="' + (props.isStartDate ? 0 : props.isToday ? 0 : -1) + '" class="sdp-day-btn' + (props.isToday ? ' sdp-day-btn--is-today' : '') + (props.isStartDate ? ' sdp-day-btn--is-active' : '') + '" role="button" data-day="' + props.number + '" data-model-index="' + i + '" aria-label="' + (props.isToday ? 'Today, ' : '') + DAYS[props.date.getDay()] + ', ' + MONTHS[props.date.getMonth()] + ' ' + props.date.getDate() + ', ' + props.date.getFullYear() + '"' + (props.previousMonth || props.nextMonth || props.isOutOfRange ? " disabled" : "") + '>' + props.number + '</button></td>';
 };
 
 var weeks = function weeks(activeDays) {
@@ -554,6 +578,7 @@ var componentPrototype = {
       });
     });
 
+    this.setDateLimits();
     this.boundHandleFocusOut = this.handleFocusOut.bind(this);
 
     this.startDate = this.input.value ? parseDate(this.input.value, this.settings.valueFormat) : false;
@@ -564,16 +589,24 @@ var componentPrototype = {
     this.settings.startOpen && this.open();
     return this;
   },
-  initClone: function initClone() {
+  setDateLimits: function setDateLimits() {
     var _this2 = this;
+
+    ['min', 'max'].forEach(function (limit) {
+      if (_this2.settings[limit + 'Date'] && !parseDate(_this2.settings[limit + 'Date'], _this2.settings.valueFormat)) return console.warn(limit + 'Date setting could not be parsed');
+      _this2.settings[limit + 'Date'] = _this2.settings[limit + 'Date'] && parseDate(_this2.settings[limit + 'Date'], _this2.settings.valueFormat);
+    });
+  },
+  initClone: function initClone() {
+    var _this3 = this;
 
     this.inputClone = elementFactory('input', { type: 'text', tabindex: -1 }, this.input.className);
     this.input.setAttribute('type', 'hidden');
     this.node.appendChild(this.inputClone);
 
     this.inputClone.addEventListener('change', function (e) {
-      var candidate = parseDate(_this2.inputClone.value, _this2.settings.displayFormat); //false if parse fails
-      if (candidate) _this2.setDate(candidate);else _this2.input.value = _this2.inputClone.value = '';
+      var candidate = parseDate(_this3.inputClone.value, _this3.settings.displayFormat); //false if parse fails
+      if (candidate) _this3.setDate(candidate);else _this3.input.value = _this3.inputClone.value = '';
     });
   },
   toggle: function toggle() {
@@ -581,10 +614,10 @@ var componentPrototype = {
   },
   open: function open() {
     if (this.isOpen) return;
+    this.workingDate = this.rootDate;
     this.renderCalendar();
     this.isOpen = true;
     this.btn.setAttribute('aria-expanded', 'true');
-    this.workingDate = this.rootDate;
     this.container.querySelector(SELECTORS.BTN_ACTIVE) ? this.container.querySelector(SELECTORS.BTN_ACTIVE).focus() : this.container.querySelector(SELECTORS.BTN_TODAY) ? this.container.querySelector(SELECTORS.BTN_TODAY).focus() : this.container.querySelectorAll(SELECTORS.BTN_DEFAULT)[0].focus();
     document.body.addEventListener('focusout', this.boundHandleFocusOut);
   },
@@ -597,12 +630,12 @@ var componentPrototype = {
     this.workingDate = false;
   },
   handleFocusOut: function handleFocusOut() {
-    var _this3 = this;
+    var _this4 = this;
 
     window.setTimeout(function () {
-      if (_this3.container.contains(document.activeElement)) return;
-      _this3.close();
-      document.body.removeEventListener('focusout', _this3.boundHandleFocusOut);
+      if (_this4.container.contains(document.activeElement)) return;
+      _this4.close();
+      document.body.removeEventListener('focusout', _this4.boundHandleFocusOut);
     }, 16);
   },
   renderCalendar: function renderCalendar() {
@@ -614,26 +647,36 @@ var componentPrototype = {
     this.initListeners();
   },
   renderMonth: function renderMonth() {
-    this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate);
+    this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate, this.settings.minDate, this.settings.maxDate);
     this.monthContainer.innerHTML = month(this.monthView);
     if (!this.container.querySelector(SELECTORS.BTN_DEFAULT + '[tabindex="0"]')) [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_DEFAULT + ':not([disabled])')).shift().setAttribute('tabindex', '0');
+    this.enableButtons();
+  },
+  enableButtons: function enableButtons() {
+    var _this5 = this;
+
+    [].slice.call(this.container.querySelectorAll('.' + CLASSNAMES.NAV_BTN)).forEach(function (btn, i) {
+      if (dateIsOutOfBounds(!Boolean(i), _this5.workingDate, _this5.settings.minDate, _this5.settings.maxDate)) btn.setAttribute('disabled', 'disabled');else if (btn.hasAttribute('disabled')) btn.removeAttribute('disabled');
+    });
   },
   initListeners: function initListeners() {
-    var _this4 = this;
+    var _this6 = this;
 
     TRIGGER_EVENTS.forEach(function (ev) {
-      _this4.container.addEventListener(ev, _this4.routeHandlers.bind(_this4));
+      _this6.container.addEventListener(ev, _this6.routeHandlers.bind(_this6));
     });
   },
   routeHandlers: function routeHandlers(e) {
     if (e.keyCode) this.handleKeyDown(e);else {
-      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION)));
+      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(e);
       if (e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
     }
   },
-  handleNav: function handleNav(action) {
+  handleNav: function handleNav(e) {
+    var action = +(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION));
     this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + action);
     this.renderMonth();
+    if (e.target.hasAttribute('disabled') || e.target.parentNode.hasAttribute('disabled')) [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_DEFAULT + ':not([disabled])'))[Boolean(action + 1) ? 'shift' : 'pop']().focus();
   },
   handleKeyDown: function handleKeyDown(e) {
     var keyDownDictionary = {
@@ -646,11 +689,15 @@ var componentPrototype = {
         keyDownDictionary.PAGE.call(this, false);
       },
       PAGE: function PAGE(up) {
+        if (dateIsOutOfBounds(up, this.workingDate, this.settings.minDate, this.settings.maxDate)) return;
+
         var nextMonth = up === true ? this.workingDate.getMonth() - 1 : this.workingDate.getMonth() + 1,
-            targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+            targetDay = getNextActiveDay(nextMonth, e.target.getAttribute(DATA_ATTRIBUTES.DAY), this.workingDate, up, this.settings.minDate, this.settings.maxDate);
+
         this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
         this.renderMonth();
-        this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)').focus();
+        var focusableDay = this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)');
+        focusableDay && focusableDay.focus();
       },
       TAB: function TAB() {
         /* 
@@ -662,7 +709,7 @@ var componentPrototype = {
       ENTER: function ENTER(e) {
         catchBubble(e);
         if (e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
-        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute(DATA_ATTRIBUTES.ACTION));
+        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(e);
       },
       ESCAPE: function ESCAPE() {
         this.close();
@@ -677,7 +724,8 @@ var componentPrototype = {
         if (this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === 1) {
           this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
           this.renderMonth();
-          [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).pop().firstElementChild.focus();
+          var focusableDays = [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED));
+          focusableDays.length > 0 && focusableDays.pop().firstElementChild.focus();
         } else this.container.querySelector('[' + DATA_ATTRIBUTES.MODEL_INDEX + '="' + (+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 1) + '"]').focus();
       },
       UP: function UP() {

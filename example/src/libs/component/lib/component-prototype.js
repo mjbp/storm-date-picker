@@ -2,11 +2,11 @@ import {
 	elementFactory,
 	monthViewFactory,
 	catchBubble,
-	monthNames,
-	dayNames,
 	getMonthLength,
 	parseDate,
-	formatDate
+	formatDate,
+	dateIsOutOfBounds,
+	getNextActiveDay
 } from './utils';
 import { calendar, month } from './templates';
 import { 
@@ -35,6 +35,7 @@ export default {
 			});
 		});
 
+		this.setDateLimits();
 		this.boundHandleFocusOut = this.handleFocusOut.bind(this);
 
 		this.startDate = this.input.value ? parseDate(this.input.value, this.settings.valueFormat) : false;
@@ -44,6 +45,12 @@ export default {
 		this.rootDate.setHours(0,0,0,0);
 		this.settings.startOpen && this.open();
 		return this;
+	},
+	setDateLimits(){
+		['min', 'max'].forEach(limit => {
+			if(this.settings[`${limit}Date`] && !parseDate(this.settings[`${limit}Date`], this.settings.valueFormat)) return console.warn(`${limit}Date setting could not be parsed`);
+			this.settings[`${limit}Date`] = this.settings[`${limit}Date`] && parseDate(this.settings[`${limit}Date`], this.settings.valueFormat);
+		});
 	},
 	initClone(){
 		this.inputClone = elementFactory('input', { type: 'text', tabindex: -1}, this.input.className);
@@ -62,10 +69,10 @@ export default {
 	},
 	open(){
 		if(this.isOpen) return;
+		this.workingDate = this.rootDate;
 		this.renderCalendar();
 		this.isOpen = true;
 		this.btn.setAttribute('aria-expanded', 'true');
-		this.workingDate = this.rootDate;
 		this.container.querySelector(SELECTORS.BTN_ACTIVE) ? this.container.querySelector(SELECTORS.BTN_ACTIVE).focus() : this.container.querySelector(SELECTORS.BTN_TODAY) ? this.container.querySelector(SELECTORS.BTN_TODAY).focus() : this.container.querySelectorAll(SELECTORS.BTN_DEFAULT)[0].focus();
 		document.body.addEventListener('focusout', this.boundHandleFocusOut);
 	},
@@ -93,9 +100,17 @@ export default {
 		this.initListeners();
 	},
 	renderMonth(){
-		this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate);
+		this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate, this.settings.minDate, this.settings.maxDate);
 		this.monthContainer.innerHTML = month(this.monthView);
 		if(!this.container.querySelector(`${SELECTORS.BTN_DEFAULT}[tabindex="0"]`)) [].slice.call(this.container.querySelectorAll(`${SELECTORS.BTN_DEFAULT}:not([disabled])`)).shift().setAttribute('tabindex', '0');
+		this.enableButtons();
+	},
+	enableButtons(){
+		[].slice.call(this.container.querySelectorAll(`.${CLASSNAMES.NAV_BTN}`))
+			.forEach((btn, i) => {
+				if(dateIsOutOfBounds(!Boolean(i), this.workingDate, this.settings.minDate, this.settings.maxDate)) btn.setAttribute('disabled','disabled');
+				else if (btn.hasAttribute('disabled')) btn.removeAttribute('disabled');
+			});
 	},
 	initListeners(){
 		TRIGGER_EVENTS.forEach(ev => {
@@ -105,13 +120,15 @@ export default {
 	routeHandlers(e){
 		if(e.keyCode) this.handleKeyDown(e);
 		else {
-			if(e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION)));
+			if(e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(e);
 			if(e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
 		}
 	},
-	handleNav(action){
+	handleNav(e){
+		let action = +(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION));
 		this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + action);
 		this.renderMonth();
+		if(e.target.hasAttribute('disabled') || e.target.parentNode.hasAttribute('disabled')) [].slice.call(this.container.querySelectorAll(`${SELECTORS.BTN_DEFAULT}:not([disabled])`))[Boolean(action + 1) ? 'shift' : 'pop']().focus();
 	},
 	handleKeyDown(e){
 		const keyDownDictionary = {
@@ -124,11 +141,15 @@ export default {
 				keyDownDictionary.PAGE.call(this, false);
 			},
 			PAGE(up){
+				if(dateIsOutOfBounds(up, this.workingDate, this.settings.minDate, this.settings.maxDate)) return;
+
 				let nextMonth = up === true ? this.workingDate.getMonth() - 1 : this.workingDate.getMonth() + 1,
-					targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+					targetDay = getNextActiveDay(nextMonth, e.target.getAttribute(DATA_ATTRIBUTES.DAY), this.workingDate, up, this.settings.minDate, this.settings.maxDate);
+					
 				this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
 				this.renderMonth();
-				this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`).focus();
+				let focusableDay = this.container.querySelector(`[${DATA_ATTRIBUTES.DAY}="${targetDay}"]:not(:disabled)`);
+				focusableDay && focusableDay.focus();
 			},
 			TAB(){
 				/* 
@@ -140,7 +161,7 @@ export default {
 			ENTER(e){
 				catchBubble(e);
 				if(e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
-				if(e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute(DATA_ATTRIBUTES.ACTION));
+				if(e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(e);
 			},
 			ESCAPE(){ this.close(); },
 			SPACE(e) { keyDownDictionary.ENTER(e); },
@@ -151,7 +172,8 @@ export default {
 				if(this.monthView.model[+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX)].number === 1) {
 					this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() - 1);
 					this.renderMonth();
-					[].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED)).pop().firstElementChild.focus();
+					let focusableDays = [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_ENABLED));
+					focusableDays.length > 0 && focusableDays.pop().firstElementChild.focus();
 				}
 				else this.container.querySelector(`[${DATA_ATTRIBUTES.MODEL_INDEX}="${+e.target.getAttribute(DATA_ATTRIBUTES.MODEL_INDEX) - 1}"]`).focus();
 			},
