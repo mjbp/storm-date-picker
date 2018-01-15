@@ -137,6 +137,11 @@
             padding:4px 8px;
             border-radius: 0;
         }
+        .sdp-back[disabled],
+        .sdp-next[disabled] {
+            cursor: none;
+            pointer-events: none;
+        }
         .sdp-next:hover,
         .sdp-back:hover {
             border:1px solid #c4c4c4;
@@ -189,7 +194,7 @@
             opacity:.45
         }
         .sdp-day-btn--is-today {
-            background-color:rgba(0,0,255, .25);
+            background-color:#efefef;
         }
         .sdp-day-btn--is-active {
             background-color:blue;
@@ -197,7 +202,8 @@
         }
         .sdp-day-btn--is-active:hover,
         .sdp-day-btn--is-active:focus {
-            background-color:#009185;
+            background-color:blue;
+            color:#fff;
         }
     </style>
 </head>

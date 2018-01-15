@@ -1,6 +1,6 @@
 /**
  * @name storm-date-picker: Lightweight, accessible date picker
- * @version 0.1.0: Thu, 04 Jan 2018 16:39:04 GMT
+ * @version 0.1.0: Mon, 15 Jan 2018 16:47:16 GMT
  * @author stormid
  * @license MIT
  */
@@ -483,7 +483,7 @@ var monthModel = function monthModel(year, month, startDate, minDate, maxDate) {
     output.push({
       number: i,
       date: _tmpDate,
-      isOutOfRange: !(minDate && minDate.getTime() < _tmpDate.getTime()) || !(maxDate && maxDate.getTime() > _tmpDate.getTime()),
+      isOutOfRange: !(minDate && minDate.getTime() <= _tmpDate.getTime()) || !(maxDate && maxDate.getTime() > _tmpDate.getTime()),
       isStartDate: startDate && isStartDate(startDate, _tmpDate) || false,
       isToday: isToday(_tmpDate)
     });
@@ -522,8 +522,28 @@ var elementFactory = function elementFactory(type) {
   return el;
 };
 
+var dateIsOutOfBounds = function dateIsOutOfBounds(isNavigatingBack, workingDate, min, max) {
+  var tmpDate = new Date(workingDate.getFullYear(), workingDate.getMonth(), 1);
+
+  if (isNavigatingBack && min && tmpDate.getTime() <= min.getTime()) return true;
+  tmpDate.setDate(getMonthLength(tmpDate.getFullYear(), tmpDate.getMonth()));
+  if (!isNavigatingBack && max && tmpDate.getTime() >= max.getTime()) return true;
+
+  return false;
+};
+
+var getNextActiveDay = function getNextActiveDay(nextMonth, activeDay, workingDate, isNavigatingBack, min, max) {
+  var candidateDay = getMonthLength(workingDate.getFullYear(), nextMonth) < activeDay ? getMonthLength(workingDate.getFullYear(), nextMonth) : activeDay,
+      tmpDate = new Date(workingDate.getFullYear(), nextMonth, candidateDay);
+
+  if (isNavigatingBack && min && tmpDate.getMonth() === min.getMonth() && tmpDate.getDate() < min.getDate()) return min.getDate();
+  if (!isNavigatingBack && max && tmpDate.getMonth() === max.getMonth() && tmpDate.getDate() > max.getDate()) return max.getDate() - 1;
+
+  return candidateDay;
+};
+
 var calendar = function calendar(props) {
-  return '<div class="sdp-date">\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-back" type="button" data-action="-1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-next" type="button" data-action="1">\n                                            <svg class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="' + CLASSNAMES.MONTH_CONTAINER + '"></div>\n                                    </div>';
+  return '<div class="sdp-date">\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-back" type="button" data-action="-1">\n                                            <svg focusable="false" class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M336.2 274.5l-210.1 210h805.4c13 0 23 10 23 23s-10 23-23 23H126.1l210.1 210.1c11 11 11 21 0 32-5 5-10 7-16 7s-11-2-16-7l-249.1-249c-11-11-11-21 0-32l249.1-249.1c21-21.1 53 10.9 32 32z"></path></svg>\n                                        </button>\n                                        <button class="' + CLASSNAMES.NAV_BTN + ' sdp-next" type="button" data-action="1">\n                                            <svg focusable="false" class="sdp-btn__icon" width="19" height="19" viewBox="0 0 1000 1000"><path d="M694.4 242.4l249.1 249.1c11 11 11 21 0 32L694.4 772.7c-5 5-10 7-16 7s-11-2-16-7c-11-11-11-21 0-32l210.1-210.1H67.1c-13 0-23-10-23-23s10-23 23-23h805.4L662.4 274.5c-21-21.1 11-53.1 32-32.1z"></path></svg>\n                                        </button>\n                                        <div class="' + CLASSNAMES.MONTH_CONTAINER + '"></div>\n                                    </div>';
 };
 
 var month = function month(props) {
@@ -594,10 +614,10 @@ var componentPrototype = {
   },
   open: function open() {
     if (this.isOpen) return;
+    this.workingDate = this.rootDate;
     this.renderCalendar();
     this.isOpen = true;
     this.btn.setAttribute('aria-expanded', 'true');
-    this.workingDate = this.rootDate;
     this.container.querySelector(SELECTORS.BTN_ACTIVE) ? this.container.querySelector(SELECTORS.BTN_ACTIVE).focus() : this.container.querySelector(SELECTORS.BTN_TODAY) ? this.container.querySelector(SELECTORS.BTN_TODAY).focus() : this.container.querySelectorAll(SELECTORS.BTN_DEFAULT)[0].focus();
     document.body.addEventListener('focusout', this.boundHandleFocusOut);
   },
@@ -630,23 +650,33 @@ var componentPrototype = {
     this.monthView = monthViewFactory(this.workingDate || this.rootDate, this.startDate, this.settings.minDate, this.settings.maxDate);
     this.monthContainer.innerHTML = month(this.monthView);
     if (!this.container.querySelector(SELECTORS.BTN_DEFAULT + '[tabindex="0"]')) [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_DEFAULT + ':not([disabled])')).shift().setAttribute('tabindex', '0');
+    this.enableButtons();
   },
-  initListeners: function initListeners() {
+  enableButtons: function enableButtons() {
     var _this5 = this;
 
+    [].slice.call(this.container.querySelectorAll('.' + CLASSNAMES.NAV_BTN)).forEach(function (btn, i) {
+      if (dateIsOutOfBounds(!Boolean(i), _this5.workingDate, _this5.settings.minDate, _this5.settings.maxDate)) btn.setAttribute('disabled', 'disabled');else if (btn.hasAttribute('disabled')) btn.removeAttribute('disabled');
+    });
+  },
+  initListeners: function initListeners() {
+    var _this6 = this;
+
     TRIGGER_EVENTS.forEach(function (ev) {
-      _this5.container.addEventListener(ev, _this5.routeHandlers.bind(_this5));
+      _this6.container.addEventListener(ev, _this6.routeHandlers.bind(_this6));
     });
   },
   routeHandlers: function routeHandlers(e) {
     if (e.keyCode) this.handleKeyDown(e);else {
-      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION)));
+      if (e.target.classList.contains(CLASSNAMES.NAV_BTN) || e.target.parentNode.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(e);
       if (e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
     }
   },
-  handleNav: function handleNav(action) {
+  handleNav: function handleNav(e) {
+    var action = +(e.target.getAttribute(DATA_ATTRIBUTES.ACTION) || e.target.parentNode.getAttribute(DATA_ATTRIBUTES.ACTION));
     this.workingDate = new Date(this.workingDate.getFullYear(), this.workingDate.getMonth() + action);
     this.renderMonth();
+    if (e.target.hasAttribute('disabled') || e.target.parentNode.hasAttribute('disabled')) [].slice.call(this.container.querySelectorAll(SELECTORS.BTN_DEFAULT + ':not([disabled])'))[Boolean(action + 1) ? 'shift' : 'pop']().focus();
   },
   handleKeyDown: function handleKeyDown(e) {
     var keyDownDictionary = {
@@ -659,8 +689,11 @@ var componentPrototype = {
         keyDownDictionary.PAGE.call(this, false);
       },
       PAGE: function PAGE(up) {
+        if (dateIsOutOfBounds(up, this.workingDate, this.settings.minDate, this.settings.maxDate)) return;
+
         var nextMonth = up === true ? this.workingDate.getMonth() - 1 : this.workingDate.getMonth() + 1,
-            targetDay = getMonthLength(this.workingDate.getFullYear(), nextMonth) < e.target.getAttribute(DATA_ATTRIBUTES.DAY) ? getMonthLength(this.workingDate.getFullYear(), nextMonth) : e.target.getAttribute(DATA_ATTRIBUTES.DAY);
+            targetDay = getNextActiveDay(nextMonth, e.target.getAttribute(DATA_ATTRIBUTES.DAY), this.workingDate, up, this.settings.minDate, this.settings.maxDate);
+
         this.workingDate = new Date(this.workingDate.getFullYear(), nextMonth, targetDay);
         this.renderMonth();
         var focusableDay = this.container.querySelector('[' + DATA_ATTRIBUTES.DAY + '="' + targetDay + '"]:not(:disabled)');
@@ -676,7 +709,7 @@ var componentPrototype = {
       ENTER: function ENTER(e) {
         catchBubble(e);
         if (e.target.classList.contains(CLASSNAMES.BTN_DEFAULT)) this.selectDate(e);
-        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(+e.target.getAttribute(DATA_ATTRIBUTES.ACTION));
+        if (e.target.classList.contains(CLASSNAMES.NAV_BTN)) this.handleNav(e);
       },
       ESCAPE: function ESCAPE() {
         this.close();
