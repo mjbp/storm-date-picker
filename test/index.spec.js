@@ -1,5 +1,5 @@
 import should from 'should';
-import DatePicker from '../dist/storm-date-picker.standalone';
+import DatePicker from '../dist';
 import 'jsdom-global/register';
 
 const html = `<div class="js-date-picker" aria-live="polite">
@@ -26,10 +26,8 @@ let DatePickers = DatePicker.init('.js-date-picker');
 describe('Initialisation', () => {
 
   it('should return an object', () => {
-
     should(DatePickers)
       .Object();
-
   });
 
   it('should return array of pickers as a property', () => {
@@ -125,25 +123,58 @@ describe('Keyboard navigation', () => {
         DatePickers.pickers[0].isOpen.should.equal(false);
     });
 
-    it('should navigate month views based on keyboard interactions', () => {
-        //DatePickers.pickers[0].toggle();
+    it('should navigate month views based on button click interactions', () => {
+        DatePickers.pickers[0].open();
+
+        var navBtns = Array.from(document.querySelectorAll('.js-sdp-nav__btn')),
+            months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            currentMonth = months[new Date().getMonth()];
+        
+        document.querySelector('.sdp-month-label').innerHTML.should.startWith(currentMonth);
+        navBtns[0].click();
+        document.querySelector('.sdp-month-label').innerHTML.should.startWith(months[new Date().getMonth() - 1] ? months[new Date().getMonth() - 1] : months[months.length - 1]);
+        navBtns[1].click();
+        document.querySelector('.sdp-month-label').innerHTML.should.startWith(currentMonth);
+
+        DatePickers.pickers[0].close();
+    });
+
+    it('should navigate days and month views based on keyboard interactions', () => {
+        DatePickers.pickers[0].open();
+
+        var startDay = DatePickers.pickers[0].rootDate,
+            startDayButton = document.querySelector('.sdp-day-btn--is-today');
+
+        console.log(document.activeElement.getAttribute('data-model-index'));
+        
+        
+        document.activeElement.dispatchEvent(new window.KeyboardEvent('keydown', { 
+            code : 37,
+            keyCode: 37
+        }));
+        //console.log(document.activeElement.getAttribute('data-model-index'));
+        
+
+        // DatePickers.pickers[0].getValue().should.equal(new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDay - 1));
         
         //need to dispatch a bubbling keydown event on a day button
+        //DatePickers.pickers[0].handlerKeyDown
+        DatePickers.pickers[0].close();
     });
 
 });
 
-describe('Focus behaviour', () => {
+// describe('Focus behaviour', () => {
 
-  it('should toggle close on focusout', () => {
-    DatePickers.pickers[0].toggle();
-    DatePickers.pickers[0].isOpen.should.equal(true);
+//   it('should toggle close on focusout', () => {
+//     DatePickers.pickers[0].toggle();
+//     DatePickers.pickers[0].isOpen.should.equal(true);
     
-    document.querySelector('.focusable-item').focus();
-    document.body.dispatchEvent( new Event( 'focusout' ) );
-    window.setTimeout(() => {
-        DatePickers.pickers[0].isOpen.should.equal(false);
-    }, 60);
-  });
+//     document.querySelector('.focusable-item').focus();
+//     document.body.dispatchEvent( new Event( 'focusout' ) );
+//     window.setTimeout(() => {
+//         DatePickers.pickers[0].isOpen.should.equal(false);
+//     }, 60);
+//   });
 
-});
+// });
