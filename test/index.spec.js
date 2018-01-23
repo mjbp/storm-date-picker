@@ -145,7 +145,7 @@ describe('Keyboard navigation', () => {
         var startDay = DatePickers.pickers[0].rootDate,
             startDayButton = document.querySelector('.sdp-day-btn--is-today');
 
-        console.log(document.activeElement.getAttribute('data-model-index'));
+        // console.log(document.activeElement.getAttribute('data-model-index'));
         
         
         document.activeElement.dispatchEvent(new window.KeyboardEvent('keydown', { 
